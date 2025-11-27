@@ -6,9 +6,9 @@ import sys
 # Directories
 name = sys.argv[1]
 
-scene_dir = f"inputs/scenefiles/{name}"
-output_dir = f"outputs-student/{name}"
-ini_dir = f"inputs/inis/{name}"
+scene_dir = f"scenefiles/{name}"
+output_dir = f"outputs/{name}"
+ini_dir = f"inis/{name}"
 
 # Ensure output directories exist
 os.makedirs(output_dir, exist_ok=True)
