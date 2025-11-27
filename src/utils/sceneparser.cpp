@@ -80,7 +80,7 @@ std::shared_ptr<Image> downsample(std::shared_ptr<Image> base, const int factor)
     return std::shared_ptr<Image>(new Image{filtered, new_w, new_h});
 }
 
-auto generateMipmaps(std::string filename)
+auto generateMipmaps(std::string filename, std::string outputPath)
 {
     auto vec = std::make_shared<ImageVector>();
     std::shared_ptr<Image> base(loadImageFromFile(filename));
@@ -97,11 +97,10 @@ auto generateMipmaps(std::string filename)
         w = new_image->width;
         h = new_image->height;
 
-        std::string output = "outputs-student/antialias/mipmaps/";
         std::string name = filename.substr(filename.find_last_of('/') + 1);
         std::string basename = name.substr(0, name.find_last_of('.'));
         std::string ext = name.substr(name.find_last_of('.'));
-        std::string path = output + basename + "_" + std::to_string(ds_factor) + ext;
+        std::string path = outputPath + basename + "_" + std::to_string(ds_factor) + ext;
 
         QImage(reinterpret_cast<const uchar *>(new_image->data), w, h,
                w * 4, // bytes per line
@@ -114,7 +113,7 @@ auto generateMipmaps(std::string filename)
     return vec;
 }
 
-void scene_dfs(SceneNode *root, RenderData &renderData)
+void scene_dfs(SceneNode *root, std::string texturepath, std::string mipspath, RenderData &renderData)
 {
     std::stack<std::pair<SceneNode *, glm::mat4>> stack;
     std::unordered_map<std::string, std::shared_ptr<ImageVector>> textureCache;
@@ -159,8 +158,10 @@ void scene_dfs(SceneNode *root, RenderData &renderData)
             std::shared_ptr<ImageVector> texture = nullptr;
             if (!filename.empty())
             {
+                const std::string &path = texturepath + filename;
+
                 // If already loaded, reuse it
-                auto it = textureCache.find(filename);
+                auto it = textureCache.find(path);
                 if (it != textureCache.end())
                 {
                     texture = it->second;
@@ -168,7 +169,7 @@ void scene_dfs(SceneNode *root, RenderData &renderData)
                 else
                 {
                     // Otherwise, load and store
-                    texture = generateMipmaps(filename);
+                    texture = generateMipmaps(path, mipspath);
                     textureCache[filename] = texture;
                 }
             }
@@ -197,9 +198,9 @@ void scene_dfs(SceneNode *root, RenderData &renderData)
     }
 }
 
-bool SceneParser::parse(std::string filepath, RenderData &renderData)
+bool SceneParser::parse(std::string scenepath, std::string texturepath, std::string mipspath,  RenderData &renderData)
 {
-    ScenefileReader fileReader = ScenefileReader(filepath);
+    ScenefileReader fileReader = ScenefileReader(scenepath);
     bool success = fileReader.readJSON();
     if (!success)
     {
@@ -211,7 +212,7 @@ bool SceneParser::parse(std::string filepath, RenderData &renderData)
 
     renderData.shapes.clear();
     renderData.lights.clear();
-    scene_dfs(fileReader.getRootNode(), renderData);
+    scene_dfs(fileReader.getRootNode(), texturepath, mipspath, renderData);
 
     return true;
 }

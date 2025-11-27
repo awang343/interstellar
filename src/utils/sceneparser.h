@@ -6,16 +6,18 @@
 #include <vector>
 
 // Struct which contains data for a single primitive, to be used for rendering
-struct RenderShapeData {
+struct RenderShapeData
+{
     unsigned long id;
     ScenePrimitive primitive;
-    glm::mat4 ctm;     // the cumulative transformation matrix
-    glm::mat4 inv_ctm; // the cumulative transformation matrix
+    glm::mat4 ctm;                                                       // the cumulative transformation matrix
+    glm::mat4 inv_ctm;                                                   // the cumulative transformation matrix
     std::shared_ptr<std::vector<std::shared_ptr<Image>>> texture_levels; // shared among shapes
 };
 
 // Struct which contains all the data needed to render a scene
-struct RenderData {
+struct RenderData
+{
     SceneGlobalData globalData;
     SceneCameraData cameraData;
 
@@ -23,11 +25,12 @@ struct RenderData {
     std::vector<RenderShapeData> shapes;
 };
 
-class SceneParser {
+class SceneParser
+{
   public:
     // Parse the scene and store the results in renderData.
     // @param filepath    The path of the scene file to load.
     // @param renderData  On return, this will contain the metadata of the loaded scene.
     // @return            A boolean value indicating whether the parse was successful.
-    static bool parse(std::string filepath, RenderData &renderData);
+    static bool parse(std::string filepath, std::string texturepath, std::string mipspath, RenderData &renderData);
 };

@@ -1,14 +1,15 @@
+# This script generates .ini configuration files for a rendering engine
+# based on JSON scene files located in a specified directory.
+
 import os
 import glob
 import configparser
 import sys
 
-# Directories
-name = sys.argv[1]
-
-scene_dir = f"scenefiles/{name}"
-output_dir = f"outputs/{name}"
-ini_dir = f"inis/{name}"
+ini_dir = f"inis/"
+scene_dir = f"scenefiles/"
+textures_dir = f"scenefiles/textures/"
+output_dir = f"outputs/"
 
 # Ensure output directories exist
 os.makedirs(output_dir, exist_ok=True)
@@ -17,18 +18,22 @@ os.makedirs(ini_dir, exist_ok=True)
 # Default template values
 canvas = {"width": "1024", "height": "768"}
 feature = {
+    "acceleration": "true",
+    "parallel": "true",
     "shadows": "true",
     "reflect": "true",
-    "refract": "false",
     "texture": "true",
-    "texture-filter": "nearest",
-    "parallel": "true",
     "super-sample": "false",
-    "post-process": "false",
-    "acceleration": "true",
-    "depthoffield": "false",
+    "mipmapping": "true",
 }
-settings = {"samples-per-pixel": "1", "maximum-recursive-depth": "4"}
+
+settings = {
+    "texture-filter": "\"bilinear\"",
+    "samples-per-pixel": "1",
+    "super-sampler-pattern": "\"grid\"",
+    "maximum-recursive-depth": "4",
+    "only-render-normals": "false",
+}
 
 # Loop through all JSON files
 for json_file in glob.glob(os.path.join(scene_dir, "*.json")):
@@ -38,11 +43,17 @@ for json_file in glob.glob(os.path.join(scene_dir, "*.json")):
     scene_path = json_file
     output_path = os.path.join(output_dir, f"{base}.png")
     ini_path = os.path.join(ini_dir, f"{base}.ini")
+    output_mipmaps = os.path.join(output_dir, "mipmaps/")
 
     # Create config
     config = configparser.ConfigParser()
 
-    config["IO"] = {"scene": scene_path, "output": output_path}
+    config["IO"] = {
+        "scene": scene_path,
+        "output": output_path,
+        "output-mipmaps": output_mipmaps,
+        "textures": textures_dir,
+    }
     config["Canvas"] = canvas
     config["Feature"] = feature
     config["Settings"] = settings

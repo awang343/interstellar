@@ -1,5 +1,7 @@
 #include "imagereader.h"
 
+#include <filesystem>
+
 /**
  * @brief Stores the image specified from the input file in this class's
  * `std::vector<RGBA> m_image`.

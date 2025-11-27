@@ -1,13 +1,11 @@
-#include <QCoreApplication>
 #include <QCommandLineParser>
+#include <QCoreApplication>
 #include <QImage>
 #include <QtCore>
 
-#include <iostream>
-#include "utils/ini_utils.h"
-#include "utils/sceneparser.h"
 #include "raytracer/raytracer.h"
 #include "raytracer/raytracescene.h"
+#include <iostream>
 
 int main(int argc, char *argv[])
 {
@@ -19,21 +17,26 @@ int main(int argc, char *argv[])
     parser.process(a);
 
     auto positionalArgs = parser.positionalArguments();
-    if (positionalArgs.size() != 1) {
-        std::cerr << "Not enough arguments. Please provide a path to a config file (.ini) as a command-line argument." << std::endl;
+    if (positionalArgs.size() != 1)
+    {
+        std::cerr << "Not enough arguments. Please provide a path to a config file (.ini) as a command-line argument."
+                  << std::endl;
         a.exit(1);
         return 1;
     }
 
-    QSettings settings( positionalArgs[0], QSettings::IniFormat );
+    QSettings settings(positionalArgs[0], QSettings::IniFormat);
     QString iScenePath = settings.value("IO/scene").toString();
+    QString iTexturePath = settings.value("IO/textures").toString();
     QString oImagePath = settings.value("IO/output").toString();
+    QString oMipmapsPath = settings.value("IO/output-mipmaps").toString();
 
     RenderData metaData;
-    bool success = SceneParser::parse(iScenePath.toStdString(), metaData);
+    bool success =
+        SceneParser::parse(iScenePath.toStdString(), iTexturePath.toStdString(), oMipmapsPath.toStdString(), metaData);
 
-
-    if (!success) {
+    if (!success)
+    {
         std::cerr << "Error loading scene: \"" << iScenePath.toStdString() << "\"" << std::endl;
         a.exit(1);
         return 1;
@@ -51,39 +54,41 @@ int main(int argc, char *argv[])
 
     // Setting up the raytracer
     RayTracer::Config rtConfig{};
-    rtConfig.enableShadow        = settings.value("Feature/shadows").toBool();
-    rtConfig.enableReflection    = settings.value("Feature/reflect").toBool();
-    rtConfig.enableRefraction    = settings.value("Feature/refract").toBool();
+
+    rtConfig.enableAcceleration = settings.value("Feature/acceleration").toBool();
+    rtConfig.enableParallelism = settings.value("Feature/parallel").toBool();
+
+    rtConfig.enableShadow = settings.value("Feature/shadows").toBool();
+    rtConfig.enableReflection = settings.value("Feature/reflect").toBool();
 
     rtConfig.enableTextureMap = settings.value("Feature/texture").toBool();
-
-    if (rtConfig.enableTextureMap)
-        rtConfig.textureFilterType = IniUtils::textureFilterTypeFromString(settings.value("Feature/texture-filter").toString());
-
-    rtConfig.enableParallelism   = settings.value("Feature/parallel").toBool();
-
-    rtConfig.enableSuperSample   = settings.value("Feature/super-sample").toBool();
-    if (settings.contains("Settings/samples-per-pixel"))
-        rtConfig.samplesPerPixel = settings.value("Settings/samples-per-pixel").toInt();
-    if (settings.contains("Settings/super-sampler-pattern"))
-        rtConfig.superSamplerPattern = IniUtils::superSamplerPatternFromString(settings.value("Settings/super-sampler-pattern").toString());
-
-    rtConfig.enableAcceleration  = settings.value("Feature/acceleration").toBool();
-    rtConfig.enableDepthOfField  = settings.value("Feature/depthoffield").toBool();
-    rtConfig.maxRecursiveDepth   = settings.value("Settings/maximum-recursive-depth").toInt();
-    rtConfig.onlyRenderNormals   = settings.value("Settings/only-render-normals").toBool();
-
+    rtConfig.enableSuperSample = settings.value("Feature/super-sample").toBool();
     rtConfig.enableMipMapping = settings.value("Feature/mipmapping").toBool();
 
-    if (rtConfig.textureFilterType == TextureFilterType::Trilinear && !rtConfig.enableMipMapping) {
+    rtConfig.maxRecursiveDepth = settings.value("Settings/maximum-recursive-depth").toInt();
+    rtConfig.onlyRenderNormals = settings.value("Settings/only-render-normals").toBool();
+
+    if (rtConfig.enableTextureMap)
+        rtConfig.textureFilterType =
+            IniUtils::textureFilterTypeFromString(settings.value("Settings/texture-filter").toString());
+
+    if (rtConfig.enableSuperSample)
+    {
+        rtConfig.samplesPerPixel = settings.value("Settings/samples-per-pixel").toInt();
+        rtConfig.superSamplerPattern =
+            IniUtils::superSamplerPatternFromString(settings.value("Settings/super-sampler-pattern").toString());
+    }
+
+    if (rtConfig.textureFilterType == TextureFilterType::Trilinear && !rtConfig.enableMipMapping)
+    {
         std::cerr << "Error: Trilinear filtering requires mip-mapping." << std::endl;
         a.exit(1);
         return 1;
     }
 
-    RayTracer raytracer{ rtConfig };
+    RayTracer raytracer{rtConfig};
 
-    RayTraceScene rtScene{ width, height, metaData };
+    RayTraceScene rtScene{width, height, metaData};
 
     // Note that we're passing `data` as a pointer (to its first element)
     // Recall from Lab 1 that you can access its elements like this: `data[i]`
@@ -91,12 +96,16 @@ int main(int argc, char *argv[])
 
     // Saving the image
     success = image.save(oImagePath);
-    if (!success) {
+    if (!success)
+    {
         success = image.save(oImagePath, "PNG");
     }
-    if (success) {
+    if (success)
+    {
         std::cout << "Saved rendered image to \"" << oImagePath.toStdString() << "\"" << std::endl;
-    } else {
+    }
+    else
+    {
         std::cerr << "Error: failed to save image to \"" << oImagePath.toStdString() << "\"" << std::endl;
     }
 

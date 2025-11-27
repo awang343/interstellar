@@ -1,0 +1,167 @@
+{
+    "name": "root",
+    "globalData": {
+        "ambientCoeff": 0.5,
+        "diffuseCoeff": 0.5,
+        "specularCoeff": 0.5,
+        "transparentCoeff": 1
+    },
+    "cameraData": {
+        "position": [
+            1.0,
+            1.0,
+            1.0
+        ],
+        "up": [
+            0.0,
+            1.0,
+            0.0
+        ],
+        "focus": [
+            0.0,
+            0.0,
+            0.0
+        ],
+        "heightAngle": 30.0
+    },
+    "groups": [
+        {
+            "lights": [
+                {
+                    "type": "directional",
+                    "color": [
+                        0.9,
+                        0.9,
+                        0.5
+                    ],
+                    "direction": [
+                        -1,
+                        0,
+                        0
+                    ]
+                }
+            ]
+        },
+        {
+            "lights": [
+                {
+                    "type": "directional",
+                    "color": [
+                        0.9,
+                        0.5,
+                        0.9
+                    ],
+                    "direction": [
+                        0,
+                        -1,
+                        0
+                    ]
+                }
+            ]
+        },
+        {
+            "lights": [
+                {
+                    "type": "directional",
+                    "color": [
+                        0.9,
+                        0.9,
+                        0.5
+                    ],
+                    "direction": [
+                        -1,
+                        0,
+                        0
+                    ]
+                }
+            ]
+        },
+        {
+            "lights": [
+                {
+                    "type": "directional",
+                    "color": [
+                        0.9,
+                        0.5,
+                        0.9
+                    ],
+                    "direction": [
+                        0,
+                        -1,
+                        0
+                    ]
+                }
+            ]
+        },
+        {
+            "lights": [
+                {
+                    "type": "directional",
+                    "color": [
+                        0.5,
+                        0.9,
+                        0.9
+                    ],
+                    "direction": [
+                        0,
+                        0,
+                        -1
+                    ]
+                }
+            ]
+        },
+        {
+            "lights": [
+                {
+                    "type": "directional",
+                    "color": [
+                        0.5,
+                        0.9,
+                        0.9
+                    ],
+                    "direction": [
+                        0,
+                        0,
+                        -1
+                    ]
+                }
+            ]
+        },
+        {
+            "groups": [
+                {
+                    "scale": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ],
+                    "primitives": [
+                        {
+                            "type": "cube",
+                            "diffuse": [
+                                1.0,
+                                1.0,
+                                1.0
+                            ],
+                            "specular": [
+                                1.0,
+                                1.0,
+                                1.0
+                            ],
+                            "shininess": 30.0,
+                            "reflective": [
+                                0.9,
+                                0.9,
+                                0.9
+                            ],
+                            "blend": 1.0,
+                            "textureFile": "board.png",
+                            "textureU": 50.0,
+                            "textureV": 50.0
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

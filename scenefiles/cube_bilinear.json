@@ -1,0 +1,129 @@
+{
+  
+  "name": "default",
+  "globalData": {
+    "ambientCoeff": 1,
+    "diffuseCoeff": 1,
+    "specularCoeff": 1,
+    "transparentCoeff": 0
+  },
+  "cameraData": {
+    "position": [
+      0,
+      0,
+      5
+    ],
+    "up": [
+      0,
+      1,
+      0
+    ],
+    "heightAngle": 45,
+    "look": [
+      0,
+      0,
+      -1
+    ]
+  },
+  "groups": [
+    {
+      "name": "Lights",
+      "lights": [
+        {
+          "color": [
+            1,
+            0.8,
+            0.5
+          ],
+          "type": "point",
+          "attenuationCoeff": [
+            0,
+            0,
+            0
+          ],
+          
+          "penumbra": 0,
+          "angle": 0,
+          "direction": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "translate": [
+        0.23,
+        2.62,
+        1.5
+      ]},
+    {
+      "name": "Lights",
+      "lights": [
+        {
+          "color": [
+            0.5,
+            0.8,
+            1
+          ],
+          "type": "point",
+          "attenuationCoeff": [
+            0,
+            0,
+            0
+          ],
+          
+          "penumbra": 0,
+          "angle": 0,
+          "direction": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "translate": [
+        0.23,
+        -2.62,
+        1.5
+      ]},
+    {
+      "name": "A lonely cube",
+      "primitives": [
+        {
+          "diffuse": [
+            0.6,
+            0.6,
+            0
+          ],
+          "specular": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "blend": 1.0,
+          "textureFile": "board.png",
+          "textureU": 200.0,
+          "textureV": 200.0,
+          "shininess": 3,
+          "type": "cube"}
+      ],
+      "translate": [
+        0,
+        0,
+        1.32
+      ],
+      
+      "rotate": [
+        1,
+        0,
+        0,
+        45
+      ],
+      "scale": [
+        2.98,
+        2.03,
+        2.03
+      ]
+    }
+  ]
+}

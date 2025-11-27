@@ -29,7 +29,7 @@ if [ -z "$BUILD_PROJECT_DIR" ]; then
 fi
 
 EXECUTABLE_PATH="$BUILD_PROJECT_DIR/projects_ray"
-INI_FOLDER="inputs/inis/$1"
+INI_FOLDER="inis"
 
 for INI_FILE in ${INI_FOLDER}/*.ini; do
   if [ -x "$EXECUTABLE_PATH" ] || [ -f "$EXECUTABLE_PATH.exe" ]; then
