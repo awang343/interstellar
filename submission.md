@@ -20,10 +20,10 @@
 ## Bump Mapping Tests (3 stars)
 | Method To Produce Output    | Texture Output                          | Bump Output                          | Final Render Output                     |
 | :-------------------------: | :----------------------------------:    | :---------------------------------:  | :-------------------------------------: |
-| brick_wall                  | ![](outputs/brick_wall_texture.png)     | ![](outputs/brick_wall_bump.png)     | ![](outputs-student/brick_cone.png)     |
-| brick_spheres               | ![](outputs/brick_spheres_texture.png)  | ![](outputs/brick_spheres_bump.png)  | ![](outputs-student/brick_cone.png)     |
-| brick_cylinder              | ![](outputs/brick_cylinder_texture.png) | ![](outputs/brick_cylinder_bump.png) | ![](outputs-student/brick_cone.png)     |
-| brick_cone                  | ![](outputs/brick_cone_texture.png)     | ![](outputs/brick_cone_bump.png)     | ![](outputs-student/brick_cone.png)     |
+| brick_wall                  | ![](outputs/brick_wall_texture.png)     | ![](outputs/brick_wall_bump.png)     | ![](outputs/brick_wall.png)             |
+| brick_spheres               | ![](outputs/brick_spheres_texture.png)  | ![](outputs/brick_spheres_bump.png)  | ![](outputs/brick_spheres.png)          |
+| brick_cylinder              | ![](outputs/brick_cylinder_texture.png) | ![](outputs/brick_cylinder_bump.png) | ![](outputs/brick_cylinder.png)         |
+| brick_cone                  | ![](outputs/brick_cone_texture.png)     | ![](outputs/brick_cone_bump.png)     | ![](outputs/brick_cone.png)             |
 
 ## Design Choices
 
