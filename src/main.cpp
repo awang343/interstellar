@@ -62,6 +62,8 @@ int main(int argc, char *argv[])
     rtConfig.enableReflection = settings.value("Feature/reflect").toBool();
 
     rtConfig.enableTextureMap = settings.value("Feature/texture").toBool();
+    rtConfig.enableBumpMap = settings.value("Feature/bump-mapping").toBool();
+    rtConfig.enableParallaxMap = settings.value("Feature/parallax-mapping").toBool();
     rtConfig.enableSuperSample = settings.value("Feature/super-sample").toBool();
     rtConfig.enableMipMapping = settings.value("Feature/mipmapping").toBool();
 
@@ -69,8 +71,17 @@ int main(int argc, char *argv[])
     rtConfig.onlyRenderNormals = settings.value("Settings/only-render-normals").toBool();
 
     if (rtConfig.enableTextureMap)
+    {
         rtConfig.textureFilterType =
-            IniUtils::textureFilterTypeFromString(settings.value("Settings/texture-filter").toString());
+            IniUtils::filterTypeFromString(settings.value("Settings/texture-filter").toString());
+    }
+
+    if (rtConfig.enableBumpMap)
+    {
+        rtConfig.bumpMapFilterType =
+            IniUtils::filterTypeFromString(settings.value("Settings/bump-map-filter").toString());
+        rtConfig.bumpScale = settings.value("Settings/bump-scale").toFloat();
+    }
 
     if (rtConfig.enableSuperSample)
     {
@@ -79,9 +90,16 @@ int main(int argc, char *argv[])
             IniUtils::superSamplerPatternFromString(settings.value("Settings/super-sampler-pattern").toString());
     }
 
-    if (rtConfig.textureFilterType == TextureFilterType::Trilinear && !rtConfig.enableMipMapping)
+    if (rtConfig.textureFilterType == FilterType::Trilinear && !rtConfig.enableMipMapping)
     {
         std::cerr << "Error: Trilinear filtering requires mip-mapping." << std::endl;
+        a.exit(1);
+        return 1;
+    }
+
+    if (!rtConfig.enableAcceleration && (rtConfig.enableShadow || rtConfig.enableReflection))
+    {
+        std::cerr << "Error: Shadows and reflection require acceleration structure." << std::endl;
         a.exit(1);
         return 1;
     }

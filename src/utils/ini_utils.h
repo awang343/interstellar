@@ -2,7 +2,7 @@
 
 #include <QtCore>
 
-enum class TextureFilterType {
+enum class FilterType {
     Nearest = 0,
     Bilinear = 1,
     Trilinear = 2,
@@ -15,6 +15,6 @@ enum class SuperSamplerPattern {
 };
 
 namespace IniUtils {
-    TextureFilterType textureFilterTypeFromString(const QString& str);
+    FilterType filterTypeFromString(const QString& str);
     SuperSamplerPattern superSamplerPatternFromString(const QString& str);
 } // namespace IniUtils

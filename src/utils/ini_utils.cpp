@@ -1,14 +1,14 @@
 #include "ini_utils.h"
 
-TextureFilterType IniUtils::textureFilterTypeFromString(const QString& str) {
+FilterType IniUtils::filterTypeFromString(const QString& str) {
     if (str == "nearest")
-        return TextureFilterType::Nearest;
+        return FilterType::Nearest;
     else if (str == "bilinear")
-        return TextureFilterType::Bilinear;
+        return FilterType::Bilinear;
     else if (str == "trilinear")
-        return TextureFilterType::Trilinear;
+        return FilterType::Trilinear;
     else
-        throw std::runtime_error("Invalid texture filter type string.");
+        throw std::runtime_error("Invalid filter type string.");
 }
 
 SuperSamplerPattern IniUtils::superSamplerPatternFromString(const QString& str) {

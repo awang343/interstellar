@@ -35,31 +35,34 @@ glm::vec3 RayTracer::shadePixel(const RayTraceScene &scene, const Hit &hit, cons
     static const float kd = scene.getGlobalData().kd;
     static const float ks = scene.getGlobalData().ks;
 
-    const glm::vec4 intersect = hit.shape->ctm * glm::vec4(hit.point, 1.f);
-    const glm::mat3 transform = glm::inverse(glm::transpose(glm::mat3(hit.shape->ctm)));
-
-    const glm::vec3 N = glm::normalize(transform * hit.normal);
-    const glm::vec3 V = glm::normalize(world_camera - glm::vec3(intersect));
-
     const glm::vec3 obj_A = hit.shape->primitive.material.cAmbient * ka;
     glm::vec3 obj_D = hit.shape->primitive.material.cDiffuse * kd;
     const glm::vec3 obj_S = hit.shape->primitive.material.cSpecular * ks;
     const glm::vec3 obj_refl = hit.shape->primitive.material.cReflective * ks;
     const float shininess = hit.shape->primitive.material.shininess;
 
+    const glm::vec4 intersect = hit.shape->ctm * glm::vec4(hit.point, 1.f);
+    const glm::mat3 transform = glm::inverse(glm::transpose(glm::mat3(hit.shape->ctm)));
+
+    const uv uv_map = get_uv(hit);
+
+    const glm::vec3 obj_normal = m_config.enableBumpMap && hit.shape->bump_map
+                                     ? get_bump_normal(hit, m_config.bumpMapFilterType, uv_map, m_config.bumpScale)
+                                     : hit.normal;
+    const glm::vec3 N = glm::normalize(transform * obj_normal);
+    const glm::vec3 V = glm::normalize(world_camera - glm::vec3(intersect));
+
     // Blend obj_D with textures
     float scale_factor = passthrough_scale_factor;
     if (m_config.enableTextureMap && hit.shape->texture_levels)
     {
         const float blend = hit.shape->primitive.material.blend;
-        const uv uv_map = get_uv(hit);
-        if (scale_factor < 0.f)
+        if (scale_factor < 0.f) // If no passthrough scale factor provided, compute it
         {
             const int spp = m_config.enableSuperSample ? m_config.samplesPerPixel : 1.f;
             scale_factor = m_config.enableMipMapping ? get_scale_factor(scene, hit, N, world_dir, uv_map, spp) : 1.f;
         }
-        const glm::vec3 texture_color =
-            get_texture(hit.shape, m_config.textureFilterType, uv_map.u, uv_map.v, scale_factor);
+        const glm::vec3 texture_color = get_texture(hit, m_config.textureFilterType, uv_map, scale_factor);
         obj_D = obj_D * (1.f - blend) + texture_color * blend;
     }
 

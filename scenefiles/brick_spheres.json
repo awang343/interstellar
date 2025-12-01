@@ -1,0 +1,145 @@
+{
+  "name": "recursive_sphere_2",
+  "globalData": {
+    "ambientCoeff": 0,
+    "diffuseCoeff": 0.8,
+    "specularCoeff": 0,
+    "transparentCoeff": 0
+  },
+  "cameraData": {
+    "position": [10, 4.1, 16],
+    "up": [0, 1, 0],
+    "heightAngle": 49.5,
+    "look": [-9, -3.2, -16]
+  },
+  "groups": [
+    {
+      "name": "Directional Lights",
+      "lights": [
+        {
+          "color": [1, 1, 1],
+          "type": "directional",
+          "direction": [0.25, 1, -1]
+        },
+        {
+          "color": [1, 1, 1],
+          "type": "directional",
+          "direction": [1, -1.8, -2]
+        }
+      ]
+    },
+    {
+      "name": "Point Light",
+      "lights": [
+        {
+          "color": [1, 1, 1],
+          "type": "point",
+          "attenuationCoeff": [1.5, 0, 0]
+        }
+      ],
+      "translate": [10, 10, 10]
+    },
+    {
+      "name": "level 0",
+      "primitives": [
+        {
+          "diffuse": [0.75, 0.75, 0.75],
+          "specular": [1, 1, 1],
+          "reflective": [1, 0.75, 0.75],
+          "shininess": 25,
+          "blend": 0.75,
+          "textureFile": "bricks.jpg",
+          "textureU": 1,
+          "textureV": 1,
+          "bumpMapFile": "bricks_height.jpg",
+          "bumpMapU": 1,
+          "bumpMapV": 1,
+          "type": "sphere"
+        }
+      ],
+      "translate": [0, 0, 0],
+      "scale": [6, 6, 6]
+    },
+    {
+      "translate": [-4.5, 0, 0],
+      "rotate": [0, 0, 1, 90],
+      "groups": [
+        {
+          "name": "level 1"
+        }
+      ]
+    },
+    {
+      "translate": [4.5, 0, 0],
+      "rotate": [0, 0, 1, -90],
+      "groups": [
+        {
+          "name": "level 1"
+        }
+      ]
+    },
+    {
+      "translate": [0, 4.5, 0],
+      "rotate": [1, 0, 0, 0],
+      "groups": [
+        {
+          "name": "level 1"
+        }
+      ]
+    },
+    {
+      "translate": [0, -4.5, 0],
+      "rotate": [0, 0, 1, 180],
+      "groups": [
+        {
+          "name": "level 1"
+        }
+      ]
+    },
+    {
+      "translate": [0, 0, -4.5],
+      "rotate": [1, 0, 0, -90],
+      "groups": [
+        {
+          "name": "level 1"
+        }
+      ]
+    },
+    {
+      "translate": [0, 0, 4.5],
+      "rotate": [1, 0, 0, 90],
+      "groups": [
+        {
+          "name": "level 1"
+        }
+      ]
+    }
+  ],
+  "templateGroups": [
+    {
+      "name": "level 1",
+      "groups": [
+        {
+          "primitives": [
+            {
+              "diffuse": [0.75, 0.75, 0.75],
+              "specular": [1, 1, 1],
+              "reflective": [0.75, 1, 0.75],
+              "shininess": 25,
+              "blend": 0.75,
+              "textureFile": "bricks.jpg",
+              "textureU": 1,
+              "textureV": 1,
+              "bumpMapFile": "bricks_height.jpg",
+              "bumpMapU": 1,
+              "bumpMapV": 1,
+              "type": "sphere"
+            }
+          ],
+          "translate": [0, 0, 0],
+          "scale": [3, 3, 3]
+        }
+      ]
+    }
+  ]
+}

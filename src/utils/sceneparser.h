@@ -5,6 +5,13 @@
 #include <string>
 #include <vector>
 
+struct BumpMap
+{
+    glm::vec2* gradients;
+    int width;
+    int height;
+};
+
 // Struct which contains data for a single primitive, to be used for rendering
 struct RenderShapeData
 {
@@ -13,6 +20,7 @@ struct RenderShapeData
     glm::mat4 ctm;                                                       // the cumulative transformation matrix
     glm::mat4 inv_ctm;                                                   // the cumulative transformation matrix
     std::shared_ptr<std::vector<std::shared_ptr<Image>>> texture_levels; // shared among shapes
+    std::shared_ptr<BumpMap> bump_map; // shared among shapes
 };
 
 // Struct which contains all the data needed to render a scene

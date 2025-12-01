@@ -71,11 +71,6 @@ void RayTracer::render_pixel(RGBA *imageData, RayTraceScene &scene, const int &i
                              unsigned int &last_ray_id, std::vector<unsigned int> &last_visited,
                              std::vector<std::pair<float, float>> &samples)
 {
-    // if (!((j == 512 && i == 1) || (j == 512 && i == 370)))
-    // {
-    //     return;
-    // }
-
     static const Camera camera = scene.getCamera();
 
     static const glm::mat4 view_matrix = camera.getViewMatrix();

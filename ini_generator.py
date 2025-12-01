@@ -19,18 +19,22 @@ os.makedirs(ini_dir, exist_ok=True)
 canvas = {"width": "1024", "height": "768"}
 feature = {
     "acceleration": "true",
-    "parallel": "true",
+    "parallel": "false",
     "shadows": "true",
     "reflect": "true",
     "texture": "true",
+    "bump-mapping": "true",
+    "parallax-mapping": "false",
     "super-sample": "false",
     "mipmapping": "true",
 }
 
 settings = {
     "texture-filter": "\"bilinear\"",
+    "bump-map-filter": "\"nearest\"",
+    "bump-scale": "20.0",
     "samples-per-pixel": "1",
-    "super-sampler-pattern": "\"grid\"",
+    "super-sampler-pattern": "\"grid\"", # options: grid, random, stratified
     "maximum-recursive-depth": "4",
     "only-render-normals": "false",
 }

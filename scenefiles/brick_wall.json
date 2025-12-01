@@ -1,0 +1,56 @@
+{
+  "name": "cornell_box",
+  "globalData": {
+    "ambientCoeff": 0.2,
+    "diffuseCoeff": 0.5,
+    "specularCoeff": 0.5,
+    "transparentCoeff": 0
+  },
+  "cameraData": {
+    "position": [0, 0.1, 1],
+    "up": [0, 1, 0],
+    "heightAngle": 49.5,
+    "look": [0, 0, -1]
+  },
+  "groups": [
+    {
+      "name": "Lighting",
+      "translate": [0, 1.5, -3.28],
+      "rotate": [0, 1, 0, 0],
+      "scale": [1, 1, 1],
+      "lights": [
+        {
+          "type": "point",
+          "color": [1, 1, 1],
+          "attenuationCoeff": [0, 0, 0],
+
+          "penumbra": 0,
+          "angle": 0,
+          "direction": [0, 0, 0]
+        }
+      ]
+    },
+    {
+      "name": "Back wall",
+      "primitives": [
+        {
+          "ambient": [0, 0, 0],
+          "diffuse": [1, 1, 1],
+          "specular": [0, 0, 0],
+          "shininess": 1,
+          "textureFile": "bricks.jpg",
+          "bumpMapFile": "bricks_height.jpg",
+          "textureU": 1,
+          "bumpMapU": 1,
+          "blend": 1.0,
+          "type": "cube"
+        }
+      ],
+      "translate": [0, 0, -5.3],
+      "rotate": [0, 1, 0, 45],
+      "scale": [5.85, 5, 1],
+
+      "lights": []
+    }
+  ]
+}

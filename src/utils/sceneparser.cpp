@@ -3,6 +3,7 @@
 
 #include <glm/gtx/transform.hpp>
 #include <iostream>
+#include <memory>
 #include <stack>
 
 using ImageVector = std::vector<std::shared_ptr<Image>>;
@@ -80,7 +81,7 @@ std::shared_ptr<Image> downsample(std::shared_ptr<Image> base, const int factor)
     return std::shared_ptr<Image>(new Image{filtered, new_w, new_h});
 }
 
-auto generateMipmaps(std::string filename, std::string outputPath)
+std::shared_ptr<ImageVector> generateMipmaps(std::string filename, std::string outputPath)
 {
     auto vec = std::make_shared<ImageVector>();
     std::shared_ptr<Image> base(loadImageFromFile(filename));
@@ -113,10 +114,49 @@ auto generateMipmaps(std::string filename, std::string outputPath)
     return vec;
 }
 
+float sample_height_wrap(const Image &img, int x, int y)
+{
+    x = (x % img.width + img.width) % img.width;
+    y = (y % img.height + img.height) % img.height;
+
+    return img.data[y * img.width + x].r / 255.0f; // grayscale in .r
+}
+
+std::shared_ptr<BumpMap> generateBumpMap(std::string filename)
+{
+    Image *bump_image = loadImageFromFile(filename);
+
+    BumpMap bump_map;
+    bump_map.width = bump_image->width;
+    bump_map.height = bump_image->height;
+
+    bump_map.gradients = new glm::vec2[bump_map.width * bump_map.height];
+
+    for (int y = 0; y < bump_map.height; y++)
+    {
+        for (int x = 0; x < bump_map.width; x++)
+        {
+
+            float hL = sample_height_wrap(*bump_image, x - 1, y);
+            float hR = sample_height_wrap(*bump_image, x + 1, y);
+            float hD = sample_height_wrap(*bump_image, x, y + 1);
+            float hU = sample_height_wrap(*bump_image, x, y - 1);
+
+            float dX = (hR - hL) * 0.5f;
+            float dY = (hD - hU) * 0.5f;
+
+            bump_map.gradients[y * bump_map.width + x] = glm::vec2(dX, dY);
+        }
+    }
+
+    return std::make_shared<BumpMap>(bump_map);
+}
+
 void scene_dfs(SceneNode *root, std::string texturepath, std::string mipspath, RenderData &renderData)
 {
     std::stack<std::pair<SceneNode *, glm::mat4>> stack;
     std::unordered_map<std::string, std::shared_ptr<ImageVector>> textureCache;
+    std::unordered_map<std::string, std::shared_ptr<BumpMap>> bumpMapCache;
 
     stack.push({root, glm::mat4(1.0f)}); // start with identity matrix
 
@@ -153,15 +193,16 @@ void scene_dfs(SceneNode *root, std::string texturepath, std::string mipspath, R
         // Process primitives
         for (ScenePrimitive *primitive : node->primitives)
         {
-            const std::string &filename = primitive->material.textureMap.filename;
+            const std::string &texture_name = primitive->material.textureMap.filename;
+            const std::string &bumpmap_name = primitive->material.bumpMap.filename;
 
             std::shared_ptr<ImageVector> texture = nullptr;
-            if (!filename.empty())
+            if (!texture_name.empty())
             {
-                const std::string &path = texturepath + filename;
+                const std::string &path = texturepath + texture_name;
 
                 // If already loaded, reuse it
-                auto it = textureCache.find(path);
+                auto it = textureCache.find(texture_name);
                 if (it != textureCache.end())
                 {
                     texture = it->second;
@@ -170,12 +211,31 @@ void scene_dfs(SceneNode *root, std::string texturepath, std::string mipspath, R
                 {
                     // Otherwise, load and store
                     texture = generateMipmaps(path, mipspath);
-                    textureCache[filename] = texture;
+                    textureCache[texture_name] = texture;
+                }
+            }
+
+            std::shared_ptr<BumpMap> bump_map = nullptr;
+            if (!bumpmap_name.empty())
+            {
+                const std::string &path = texturepath + bumpmap_name;
+
+                // If already loaded, reuse it
+                auto it = bumpMapCache.find(bumpmap_name);
+                if (it != bumpMapCache.end())
+                {
+                    bump_map = it->second;
+                }
+                else
+                {
+                    // Otherwise, load and store
+                    bump_map = generateBumpMap(path);
+                    bumpMapCache[bumpmap_name] = bump_map;
                 }
             }
 
             renderData.shapes.push_back(
-                RenderShapeData{std::size(renderData.shapes), *primitive, ctm, glm::inverse(ctm), texture});
+                RenderShapeData{std::size(renderData.shapes), *primitive, ctm, glm::inverse(ctm), texture, bump_map});
         }
 
         // Process lights
@@ -198,7 +258,7 @@ void scene_dfs(SceneNode *root, std::string texturepath, std::string mipspath, R
     }
 }
 
-bool SceneParser::parse(std::string scenepath, std::string texturepath, std::string mipspath,  RenderData &renderData)
+bool SceneParser::parse(std::string scenepath, std::string texturepath, std::string mipspath, RenderData &renderData)
 {
     ScenefileReader fileReader = ScenefileReader(scenepath);
     bool success = fileReader.readJSON();

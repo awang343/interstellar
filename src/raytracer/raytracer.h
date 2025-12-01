@@ -28,20 +28,26 @@ class RayTracer
   public:
     struct Config
     {
+        bool enableAcceleration = false;
+        bool enableParallelism = false;
+
         bool enableShadow = false;
         bool enableReflection = false;
-        bool enableRefraction = false;
-        bool enableTextureMap = false;
-        TextureFilterType textureFilterType = TextureFilterType::Nearest;
-        bool enableParallelism = false;
-        bool enableSuperSample = false;
-        bool enableAcceleration = false;
-        bool enableDepthOfField = false;
         int maxRecursiveDepth = RAY_TRACE_MAX_DEPTH;
-        int samplesPerPixel = RAY_TRACE_DEFAULT_SPP;
-        SuperSamplerPattern superSamplerPattern = SuperSamplerPattern::Grid;
-        bool onlyRenderNormals = false;
+
+        bool enableTextureMap = false;
+        bool enableBumpMap = false;
+        FilterType textureFilterType = FilterType::Nearest;
+        FilterType bumpMapFilterType = FilterType::Nearest;
+        float bumpScale = 1.f;
+        bool enableParallaxMap = false;
         bool enableMipMapping = false;
+
+        bool enableSuperSample = false;
+        SuperSamplerPattern superSamplerPattern = SuperSamplerPattern::Grid;
+        int samplesPerPixel = RAY_TRACE_DEFAULT_SPP;
+
+        bool onlyRenderNormals = false;
     };
 
   public:

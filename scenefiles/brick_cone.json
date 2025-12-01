@@ -1,0 +1,47 @@
+{
+  "name": "unit_cone",
+  "globalData": {
+    "ambientCoeff": 0.5,
+    "diffuseCoeff": 0.5,
+    "specularCoeff": 0.5,
+    "transparentCoeff": 0
+  },
+  "cameraData": {
+    "position": [3, 3, 3],
+    "up": [0, 1, 0],
+    "heightAngle": 30,
+    "focus": [0, 0, 0]
+  },
+  "groups": [
+    {
+      "lights": [
+        {
+          "color": [1, 1, 1],
+          "type": "directional",
+          "direction": [-3, -2, -1]
+        }
+      ]
+    },
+    {
+      "groups": [
+        {
+          "primitives": [
+            {
+              "diffuse": [1, 1, 1],
+              "specular": [0, 0, 0],
+              "shininess": 25,
+              "textureFile": "bricks.jpg",
+              "textureU": 1,
+              "textureV": 1,
+              "bumpMapFile": "bricks_height.jpg",
+              "bumpMapU": 1,
+              "bumpMapV": 1,
+              "blend": 1.0,
+              "type": "cone"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
