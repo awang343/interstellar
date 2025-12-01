@@ -2,6 +2,9 @@
 
 ## Acceleration Structure Tests (4 stars)
 
+The following tests were run on a machine with an AMD Ryzen 9 6900HS CPU and 32GB of RAM.
+I disabled reflection and shadows to keep comparisons simple and focused on primary rays only.
+
 | scenefile            | kdtree_build_time | kdtree_render_time | unaccelerated_render_time |
 |----------------------|-------------------|--------------------|---------------------------|
 | recursive_spheres_2  | 0.00              | 0.12               | 0.10                      |
