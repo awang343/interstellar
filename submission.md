@@ -13,12 +13,30 @@ I disabled reflection and shadows to keep comparisons simple and focused on prim
 | recursive_spheres_5  | 0.00              | 0.46               | 4.65                      |
 | recursive_spheres_6  | 0.01              | 0.66               | 25.88                     |
 | recursive_spheres_7  | 0.05              | 1.12               | 134.19                    |
-| recursive_spheres_8  | 0.25              | 2.53               | DNF                       |
-| recursive_spheres_9  | 1.36              | 8.21               | DNF                       |
-| recursive_spheres_10 | 7.86              | 64.97              | DNF                       |
+| recursive_spheres_8  | 0.25              | 2.53               | >300                      |
+| recursive_spheres_9  | 1.36              | 8.21               | >300                      |
+| recursive_spheres_10 | 7.86              | 64.97              | >300                      |
 | primitive_salad_1    | 0.00              | 0.41               | 0.66                      |
 | primitive_salad_2    | 0.00              | 2.50               | 11.93                     |
 
+However, I also tested edge cases for shadows and reflections to ensure correctness when accelerated.
+I found that the acceleration structure still keeps performance reasonable despite multiplying the number and variability of rays by including secondary rays.
+
+| scenefile (with shadows and reflections) | kdtree_render_time |
+|------------------------------------------|--------------------|
+| recursive_spheres_2                      | 0.21               |
+| recursive_spheres_3                      | 0.64               |
+| recursive_spheres_4                      | 1.35               |
+| recursive_spheres_5                      | 2.07               |
+| recursive_spheres_6                      | 4.10               |
+| recursive_spheres_7                      | 9.34               |
+| recursive_spheres_8                      | 30.18              |
+| recursive_spheres_9                      | 109.30             |
+| recursive_spheres_10                     | >300               |
+| primitive_salad_1                        | 1.00               |
+| primitive_salad_2                        | 13.77              |
+
+Finally, I ran my acceleration structure on more complex scenes from illuminate and antialias to test compatibility. No issues were found.
 
 ## Bump Mapping Tests (3 stars)
 | Method To Produce Output    | Texture Output                          | Bump Output                          | Final Render Output                     |
