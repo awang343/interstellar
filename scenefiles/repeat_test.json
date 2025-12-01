@@ -40,6 +40,7 @@
           "shininess": 1,
           "textureFile": "bricks.jpg",
           "textureU": 2,
+          "textureV": 2,
           "bumpMapFile": "bricks_height.jpg",
           "bumpMapU": 2,
           "bumpMapV": 2,
