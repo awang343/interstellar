@@ -1,0 +1,46 @@
+# Final Project 6 Submission
+
+## Acceleration Structure Tests (4 stars)
+
+| scenefile            | kdtree_build_time | kdtree_render_time | unaccelerated_render_time |
+|----------------------|-------------------|--------------------|---------------------------|
+| recursive_spheres_2  | 0.00              | 0.12               | 0.10                      |
+| recursive_spheres_3  | 0.00              | 0.24               | 0.29                      |
+| recursive_spheres_4  | 0.00              | 0.37               | 1.14                      |
+| recursive_spheres_5  | 0.00              | 0.46               | 4.65                      |
+| recursive_spheres_6  | 0.01              | 0.66               | 25.88                     |
+| recursive_spheres_7  | 0.05              | 1.12               | 134.19                    |
+| recursive_spheres_8  | 0.25              | 2.53               | DNF                       |
+| recursive_spheres_9  | 1.36              | 8.21               | DNF                       |
+| recursive_spheres_10 | 7.86              | 64.97              | DNF                       |
+| primitive_salad_1    | 0.00              | 0.41               | 0.66                      |
+| primitive_salad_2    | 0.00              | 2.50               | 11.93                     |
+
+
+## Bump Mapping Tests (3 stars)
+| Method To Produce Output    | Texture Output                          | Bump Output                          | Final Render Output                     |
+| :-------------------------: | :----------------------------------:    | :---------------------------------:  | :-------------------------------------: |
+| brick_wall                  | ![](outputs/brick_wall_texture.png)     | ![](outputs/brick_wall_bump.png)     | ![](outputs-student/brick_cone.png)     |
+| brick_spheres               | ![](outputs/brick_spheres_texture.png)  | ![](outputs/brick_spheres_bump.png)  | ![](outputs-student/brick_cone.png)     |
+| brick_cylinder              | ![](outputs/brick_cylinder_texture.png) | ![](outputs/brick_cylinder_bump.png) | ![](outputs-student/brick_cone.png)     |
+| brick_cone                  | ![](outputs/brick_cone_texture.png)     | ![](outputs/brick_cone_bump.png)     | ![](outputs-student/brick_cone.png)     |
+
+## Design Choices
+
+- For the acceleration structure, I implemented KD-Trees
+  - The building of the tree is done in kdtree.cpp using SAH as a splitting heuristic
+  - During traversal, I keep track of ray_id (the number of pixels rendered so far) and last_visited which tells me if I've already checked an object in this ray iteration
+  - I made sure to optimize for branch elimination during traversal by ordering child nodes based on ray traversal direction
+- For bump mapping, I put all the code in textures.cpp
+  - I compute the height map gradients ahead of time during scene initialization to avoid recomputing for every lookup
+  - Instead of calculating du/dp and dv/dp, I had to calculate dp/du and dp/dv
+  - I give the user the option to choose betweeen nearest and bilinear interpolation for bump map gradients
+
+## Collaboration / References
+- Lots of ChatGPT and Copilot
+- [Bump Mapping Slides](https://cgl.ethz.ch/teaching/former/gdv1_04/GDV1_WS04/exercise/P6_Bump_mapping_hints.pdf)
+
+## Known Bugs
+- The bump map outputs have black speckles (aliasing) when the texture is clumped up.
+  - I believe this is due to speckles in the original brick wall texture
+  - This is somewhat alleviated by applying bilinear interpolation when sampling the bump map
