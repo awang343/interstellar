@@ -1,0 +1,54 @@
+{
+  "name": "unit_sphere",
+  "globalData": {
+    "ambientCoeff": 0.5,
+    "diffuseCoeff": 1,
+    "specularCoeff": 0.5,
+    "transparentCoeff": 0
+  },
+  "cameraData": {
+    "position": [3, 3, 3],
+    "up": [0, 1, 0],
+    "heightAngle": 30,
+    "focus": [0, 0, 0]
+  },
+  "groups": [
+    {
+      "lights": [
+        {
+          "color": [1, 1, 1],
+          "type": "directional",
+          "direction": [-3, -2, -1]
+        },
+        {
+          "color": [1, 1, 1],
+          "type": "directional",
+          "direction": [3, 2, 1]
+        }
+      ]
+    },
+    {
+      "groups": [
+        {
+          "rotate": [0, 1, 0, 90],
+          "scale": [2, 2, 2],
+          "primitives": [
+            {
+              "diffuse": [1, 1, 1],
+              "specular": [0, 0, 0],
+              "shininess": 25,
+              "textureFile": "earth.jpg",
+              "textureU": 1,
+              "textureV": 1,
+              "blend": 1.0,
+              "bumpMapFile": "elevation.jpg",
+              "bumpMapU": 1,
+              "bumpMapV": 1,
+              "type": "sphere"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

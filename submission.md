@@ -46,6 +46,7 @@ Finally, I ran my acceleration structure on more complex scenes from illuminate 
 | brick_cylinder              | ![](outputs/brick_cylinder_texture.png) | ![](outputs/brick_cylinder_bump.png) | ![](outputs/brick_cylinder.png)         |
 | brick_cone                  | ![](outputs/brick_cone_texture.png)     | ![](outputs/brick_cone_bump.png)     | ![](outputs/brick_cone.png)             |
 | repeat_test                 | ![](outputs/repeat_test_texture.png)    | ![](outputs/repeat_test_bump.png)    | ![](outputs/repeat_test.png)            |
+| earth                       | ![](outputs/earth_texture.png)          | ![](outputs/earth_bump.png)          | ![](outputs/earth.png)                  |
 
 ## Design Choices
 
