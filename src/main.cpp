@@ -1,132 +1,245 @@
-#include <QCommandLineParser>
 #include <QCoreApplication>
+#include <QCommandLineParser>
 #include <QImage>
 #include <QtCore>
 
-#include "raytracer/raytracer.h"
-#include "raytracer/raytracescene.h"
+#include <vector>
 #include <iostream>
+#include <cmath>
 
-int main(int argc, char *argv[])
+#include "src/utils/rgba.h"
+#include "src/raytrace.h"
+#include "utils/scenefileparser.h"
+
+// a struct containing info of an image
+struct ImageData {
+    int width  = 0;
+    int height = 0;
+    std::vector<RGBA> pixels;  // size = width * height
+};
+
+
+// this function loads the two celestial sphere textures into image data
+bool loadImageToStruct(const QString &path, ImageData &out)
 {
-    QCoreApplication a(argc, argv);
+    QImage img(path);
+    if (img.isNull()) {
+        std::cerr << "Failed to load image: " << path.toStdString() << "\n";
+        return false;
+    }
+
+    QImage converted = img.convertToFormat(QImage::Format_RGBA8888);
+
+    out.width  = converted.width();
+    out.height = converted.height();
+    out.pixels.resize(out.width * out.height);
+
+    for (int y = 0; y < out.height; ++y) {
+        const uchar *line = converted.constScanLine(y);
+        for (int x = 0; x < out.width; ++x) {
+            const uchar *src = line + 4 * x;
+            RGBA &dst = out.pixels[y * out.width + x];
+            dst.r = src[0];
+            dst.g = src[1];
+            dst.b = src[2];
+            dst.a = src[3];
+        }
+    }
+    return true;
+}
+
+
+// this function samples the celestial sphere texture gased on given theta and phi
+RGBA sampleCelestial(const ImageData &img, double theta, double phi)
+{
+    if (img.width == 0 || img.height == 0) {
+        return {0, 0, 0, 255};
+    }
+
+    // Normalize φ to [0, 2π)
+    double twoPi = 2.0 * M_PI;
+    double phiNorm = std::fmod(phi, twoPi);
+    if (phiNorm < 0.0) phiNorm += twoPi;
+
+    // θ in [0, π] ideally; clamp
+    double thetaClamped = std::max(0.0, std::min(M_PI, theta));
+
+    // longitude-latitude map: u = φ / (2π), v = θ / π
+    double u = phiNorm / twoPi;
+    double v = thetaClamped / M_PI;
+
+    int x = static_cast<int>(u * (img.width  - 1));
+    int y = static_cast<int>(v * (img.height - 1));
+
+    x = std::max(0, std::min(img.width  - 1, x));
+    y = std::max(0, std::min(img.height - 1, y));
+
+    return img.pixels[y * img.width + x];
+}
+
+// this function traces the rays
+void render(
+    RGBA *framebuffer,
+    int outWidth,
+    int outHeight,
+    const ImageData &sphereUpper,
+    const ImageData &sphereLower,
+    double fovW,
+    WormholeParams wp,
+    double dt,
+    double cameraDistance)
+{
+    // Camera setup
+    const double l_c     = cameraDistance;
+    const double theta_c = M_PI / 2.0; // equatorial
+    const double phi_c   = 0;
+
+    // Aspect ratio and vertical FOV
+    double aspect   = static_cast<double>(outHeight) / static_cast<double>(outWidth);
+
+    // Loop over pixels
+    double planeWidth = tan(fovW * 0.5);
+    double planeHeight = planeWidth * aspect;
+
+    // Integration constants (-0.01 seems good enough, but very slow...)
+    const double tMin = -200.0;
+    const double lMax = 20.0;
+
+    for (int j = 0; j < outHeight; ++j) {
+        for (int i = 0; i < outWidth; ++i) {
+            int idx = j * outWidth + i;
+
+            if (idx % 10000 == 0) {
+                std::cout << "ind: " << idx << std::endl;
+            }
+
+            // Normalized device coordinates in [-1,1]
+            double ndcW = 2.0 * ((i + 0.5) / static_cast<double>(outWidth))  - 1.0;
+            double ndcH = 2.0 * ((j + 0.5) / static_cast<double>(outHeight)) - 1.0;
+
+            // Pinhole camera direction
+            double px = 1.0;
+            double py = planeWidth * (ndcW);
+            double pz = planeHeight * (-ndcH);
+
+            double normP = sqrt(px*px + py*py + pz*pz);
+            px /= normP;
+            py /= normP;
+            pz /= normP;
+
+            // Direction of incoming ray is -p
+            double n_l     = -px;
+            double n_phi   = -py;
+            double n_theta = pz;
+
+            // Initial state
+            RayState ray;
+            ray.l     = l_c;
+            ray.theta = theta_c;
+            ray.phi   = phi_c;
+
+            double r_c = r_of_l(ray.l, wp);
+
+            ray.p_l     = n_l;
+            ray.p_theta = r_c * n_theta;
+            ray.b       = r_c * sin(ray.theta) * n_phi;
+
+            // numerical integration
+            double t = 0.0;
+            while (t > tMin) {
+                rk4Step(ray, wp, dt);
+                if (abs(ray.l) > lMax) {
+                    break;
+                }
+                t += dt;
+            }
+
+            RGBA color = {0, 0, 0, 255};
+
+            if (abs(ray.l) > lMax) {
+                if (ray.l > 0.0) {
+                    color = sampleCelestial(sphereUpper, ray.theta, ray.phi);
+                } else {
+                    color = sampleCelestial(sphereLower, ray.theta, ray.phi);
+                }
+            } else {
+                color = {0, 0, 0, 255};
+            }
+
+            framebuffer[idx] = color;
+        }
+    }
+}
+
+// the main function for the program
+int main(int argc, char *argv[]) {
+    QCoreApplication app(argc, argv);
 
     QCommandLineParser parser;
+    parser.setApplicationDescription("Relativistic wormhole raytracer (Dneg metric)");
     parser.addHelpOption();
-    parser.addPositionalArgument("config", "Path of the config file.");
-    parser.process(a);
 
-    auto positionalArgs = parser.positionalArguments();
-    if (positionalArgs.size() != 1)
-    {
-        std::cerr << "Not enough arguments. Please provide a path to a config file (.ini) as a command-line argument."
-                  << std::endl;
-        a.exit(1);
+    // Now we take a single positional argument: the JSON config file
+    parser.addPositionalArgument("config",
+                                 "Path to the JSON configuration file.");
+
+    parser.process(app);
+
+    const QStringList args = parser.positionalArguments();
+    if (args.size() != 1) {
+        std::cerr << "Usage: raytracer <config.json>\n";
         return 1;
     }
 
-    QSettings settings(positionalArgs[0], QSettings::IniFormat);
-    QString iScenePath = settings.value("IO/scene").toString();
-    QString iTexturePath = settings.value("IO/textures").toString();
-    QString oImagePath = settings.value("IO/output").toString();
-    QString oMipmapsPath = settings.value("IO/output-mipmaps").toString();
+    const QString configPath = args[0];
 
-    RenderData metaData;
-    bool success =
-        SceneParser::parse(iScenePath.toStdString(), iTexturePath.toStdString(), oMipmapsPath.toStdString(), metaData);
+    // 1. Load scene configuration from JSON
+    sceneInfo scene;
+    if (!loadSceneInfoFromJson(configPath, scene)) {
+        return 1; // errors already printed by loader
+    }
 
-    if (!success)
-    {
-        std::cerr << "Error loading scene: \"" << iScenePath.toStdString() << "\"" << std::endl;
-        a.exit(1);
+    // 2. Load input textures
+    ImageData sphereUpper;
+    ImageData sphereLower;
+
+    if (!loadImageToStruct(scene.upperTexturePath, sphereUpper)) return 1;
+    if (!loadImageToStruct(scene.lowerTexturePath, sphereLower)) return 1;
+
+    // 3. Allocate output QImage using configured resolution
+    QImage outputImage(scene.outWidth, scene.outHeight, QImage::Format_RGBA8888);
+    if (outputImage.isNull()) {
+        std::cerr << "Failed to allocate output QImage\n";
         return 1;
     }
 
-    // Raytracing-relevant code starts here
+    RGBA *framebuffer = reinterpret_cast<RGBA*>(outputImage.bits());
 
-    int width = settings.value("Canvas/width").toInt();
-    int height = settings.value("Canvas/height").toInt();
+    WormholeParams wp{scene.rho, scene.a, scene.M};
 
-    // Extracting data pointer from Qt's image API
-    QImage image = QImage(width, height, QImage::Format_RGBX8888);
-    image.fill(Qt::black);
-    RGBA *data = reinterpret_cast<RGBA *>(image.bits());
+    // 4. Render using FOV from config (scene.viewPlaneWidthAngle is in radians)
+    render(framebuffer,
+           scene.outWidth,
+           scene.outHeight,
+           sphereUpper,
+           sphereLower,
+           scene.viewPlaneWidthAngle, // in radians
+           wp,
+           scene.dt,
+           scene.cameraDistance);
 
-    // Setting up the raytracer
-    RayTracer::Config rtConfig{};
+    // 5. Save output
+    bool ok = outputImage.save(scene.outputPath);
+    if (!ok) ok = outputImage.save(scene.outputPath, "PNG");
 
-    rtConfig.enableAcceleration = settings.value("Feature/acceleration").toBool();
-    rtConfig.enableParallelism = settings.value("Feature/parallel").toBool();
-
-    rtConfig.enableShadow = settings.value("Feature/shadows").toBool();
-    rtConfig.enableReflection = settings.value("Feature/reflect").toBool();
-
-    rtConfig.enableTextureMap = settings.value("Feature/texture").toBool();
-    rtConfig.enableBumpMap = settings.value("Feature/bump-mapping").toBool();
-    rtConfig.enableParallaxMap = settings.value("Feature/parallax-mapping").toBool();
-    rtConfig.enableSuperSample = settings.value("Feature/super-sample").toBool();
-    rtConfig.enableMipMapping = settings.value("Feature/mipmapping").toBool();
-
-    rtConfig.maxRecursiveDepth = settings.value("Settings/maximum-recursive-depth").toInt();
-    rtConfig.onlyRenderNormals = settings.value("Settings/only-render-normals").toBool();
-
-    if (rtConfig.enableTextureMap)
-    {
-        rtConfig.textureFilterType =
-            IniUtils::filterTypeFromString(settings.value("Settings/texture-filter").toString());
-    }
-
-    if (rtConfig.enableBumpMap)
-    {
-        rtConfig.bumpMapFilterType =
-            IniUtils::filterTypeFromString(settings.value("Settings/bump-map-filter").toString());
-        rtConfig.bumpScale = settings.value("Settings/bump-scale").toFloat();
-    }
-
-    if (rtConfig.enableSuperSample)
-    {
-        rtConfig.samplesPerPixel = settings.value("Settings/samples-per-pixel").toInt();
-        rtConfig.superSamplerPattern =
-            IniUtils::superSamplerPatternFromString(settings.value("Settings/super-sampler-pattern").toString());
-    }
-
-    if (rtConfig.textureFilterType == FilterType::Trilinear && !rtConfig.enableMipMapping)
-    {
-        std::cerr << "Error: Trilinear filtering requires mip-mapping." << std::endl;
-        a.exit(1);
+    if (!ok) {
+        std::cerr << "Failed to save output image: "
+                  << scene.outputPath.toStdString() << "\n";
         return 1;
     }
 
-    if (!rtConfig.enableAcceleration && (rtConfig.enableShadow || rtConfig.enableReflection))
-    {
-        std::cerr << "Error: Shadows and reflection require acceleration structure." << std::endl;
-        a.exit(1);
-        return 1;
-    }
-
-    RayTracer raytracer{rtConfig};
-
-    RayTraceScene rtScene{width, height, metaData};
-
-    // Note that we're passing `data` as a pointer (to its first element)
-    // Recall from Lab 1 that you can access its elements like this: `data[i]`
-    raytracer.render(data, rtScene);
-
-    // Saving the image
-    success = image.save(oImagePath);
-    if (!success)
-    {
-        success = image.save(oImagePath, "PNG");
-    }
-    if (success)
-    {
-        std::cout << "Saved rendered image to \"" << oImagePath.toStdString() << "\"" << std::endl;
-    }
-    else
-    {
-        std::cerr << "Error: failed to save image to \"" << oImagePath.toStdString() << "\"" << std::endl;
-    }
-
-    a.exit();
+    std::cout << "Saved rendered image to "
+              << scene.outputPath.toStdString() << "\n";
     return 0;
 }
+

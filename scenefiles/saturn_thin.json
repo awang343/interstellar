@@ -1,0 +1,17 @@
+{
+  "upperTexture": "texture/saturn.png",
+  "lowerTexture": "texture/stars.png",
+  "outputImage": "output/saturn_thin.png",
+
+  "rho": 0.5,
+  "a": 0.025,
+  "M": 0.02,
+
+  "outWidth": 400,
+  "outHeight": 300,
+
+  "viewPlaneWidthAngle": 60.0,
+
+  "dt": -0.01,
+  "cameraDistance": -6.3
+}

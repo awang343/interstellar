@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 # Sets project name
-project(projects_ray LANGUAGES CXX)
+project(projects_relativistic LANGUAGES CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -18,7 +18,6 @@ find_package(Qt6 REQUIRED COMPONENTS Concurrent)
 find_package(Qt6 REQUIRED COMPONENTS Core)
 find_package(Qt6 REQUIRED COMPONENTS Gui)
 find_package(Qt6 REQUIRED COMPONENTS Xml)
-find_package(OpenMP REQUIRED)
 
 # Allows you to include files from within those directories, without prefixing their filepaths
 include_directories(src)
@@ -28,31 +27,11 @@ add_definitions(-DGLM_FORCE_SWIZZLE)
 # Specifies .cpp and .h files to be passed to the compiler
 add_executable(${PROJECT_NAME}
   src/main.cpp
-
-  src/camera/camera.cpp
-  src/raytracer/raytracer.cpp
-  src/raytracer/raytracescene.cpp
-  src/raytracer/intersector.cpp
-  src/raytracer/lighting.cpp
-  src/raytracer/kdtree.cpp
-  src/raytracer/textures.cpp
-  src/utils/scenefilereader.cpp
-  src/utils/sceneparser.cpp
-
-  src/camera/camera.h
-  src/raytracer/raytracer.h
-  src/raytracer/raytracescene.h
-  src/raytracer/intersector.h
-  src/raytracer/lighting.h
-  src/raytracer/kdtree.h
-  src/raytracer/textures.h
+  src/raytrace.h
   src/utils/rgba.h
-  src/utils/scenedata.h
-  src/utils/scenefilereader.h
-  src/utils/sceneparser.h
-
-  src/utils/imagereader.h src/utils/imagereader.cpp
-  src/utils/ini_utils.h src/utils/ini_utils.cpp
+  src/raytrace.cpp
+  src/utils/scenefileparser.cpp
+  src/utils/scenefileparser.h
 
 )
 
@@ -74,9 +53,4 @@ endif()
 # Set this flag to silence warnings on MacOS
 if (APPLE)
   set(CMAKE_CXX_FLAGS "-Wno-deprecated-volatile")
-endif()
-
-# Link OpenMP
-if(OpenMP_CXX_FOUND)
-    target_link_libraries(projects_ray PUBLIC OpenMP::OpenMP_CXX)
 endif()

@@ -1,0 +1,17 @@
+{
+  "upperTexture": "texture/arrow.png",
+  "lowerTexture": "texture/white.png",
+  "outputImage": "output/lower_sphere_arrow_upper.png",
+
+  "rho": 1.0,
+  "a": 0.05,
+  "M": 0.02,
+
+  "outWidth": 400,
+  "outHeight": 300,
+
+  "viewPlaneWidthAngle": 60.0,
+
+  "dt": -0.01,
+  "cameraDistance": -6.3
+}
