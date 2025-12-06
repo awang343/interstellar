@@ -3,7 +3,7 @@
 
 // Compute r(l) as in Equation 5a, 5b, 5c
 double r_of_l(double l, const WormholeParams &p) {
-    double absL = abs(l);
+    double absL = std::fabs(l);
     // Equation 5a
     if (absL <= p.a) {
         return p.rho;
@@ -19,7 +19,7 @@ double r_of_l(double l, const WormholeParams &p) {
 
 // Compute dr/dl as in Equation 5a
 double drdl_of_l(double l, const WormholeParams &p) {
-    double absL = abs(l);
+    double absL = std::fabs(l);
     if (absL <= p.a) {
         return 0.0;
     }
@@ -48,7 +48,7 @@ void geodesicDeriv(const RayState &s,
     double cosT = cos(s.theta);
     // avoid dividing by zero
     const double eps = 1e-6;
-    if (abs(sinT) < eps) {
+    if (std::fabs(sinT) < eps) {
         sinT = (sinT >= 0.0 ? eps : -eps);
     }
 
