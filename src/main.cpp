@@ -9,6 +9,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "camerapath.h"
 #include "src/utils/rgba.h"
 #include "src/raytrace.h"
 #include "utils/scenefileparser.h"
@@ -217,13 +218,15 @@ void render(
     double fovW,
     WormholeParams wp,
     double dt,
-    double cameraDistance)
+    double cameraDistance,
+    double cameraTheta,
+    double cameraPhi)
 {
 
     // Camera setup
     const double l_c     = cameraDistance;
-    const double theta_c = M_PI / 2.0; // equatorial
-    const double phi_c   = 0;
+    const double theta_c = cameraTheta; // equatorial
+    const double phi_c   = cameraPhi;
 
     // Aspect ratio and vertical FOV
     double aspect   = static_cast<double>(outHeight) / static_cast<double>(outWidth);
@@ -348,29 +351,55 @@ int main(int argc, char *argv[]) {
 
     WormholeParams wp{scene.rho, scene.a, scene.M};
 
-    // 4. Render using FOV from config (scene.viewPlaneWidthAngle is in radians)
-    renderEquatorial(framebuffer,
-           scene.outWidth,
-           scene.outHeight,
-           sphereUpper,
-           sphereLower,
-           scene.viewPlaneWidthAngle, // in radians
-           wp,
-           scene.dt,
-           scene.cameraDistance);
+    // CAMERA PATH ADDITIONS
 
-    // 5. Save output
-    bool ok = outputImage.save(scene.outputPath);
-    if (!ok) ok = outputImage.save(scene.outputPath, "PNG");
+    // 4. create camera paths
+    cameraPath paths;
+    paths.addPath(
+        -10.f, M_PI/2.0, M_PI/2.f,
+        -10.f, M_PI/2.0, M_PI,
+        pathtype::PATHTYPE_LINEAR, 5);
 
-    if (!ok) {
-        std::cerr << "Failed to save output image: "
-                  << scene.outputPath.toStdString() << "\n";
-        return 1;
+
+    // 5. iterate over camera paths
+    int pointNum = 5;
+    for (auto cameraPoint : paths.getPoints()) {
+        // 6. change scene's camera
+        scene.cameraDistance = cameraPoint.r;
+        scene.cameraTheta = cameraPoint.theta;
+        scene.cameraPhi = cameraPoint.phi;
+        QString output = scene.outputPath + "/" + QString::number(pointNum) + ".png";
+        pointNum += 1;
+
+        // 7. Render using FOV from config w/ this set point
+        render(framebuffer,
+               scene.outWidth,
+               scene.outHeight,
+               sphereUpper,
+               sphereLower,
+               scene.viewPlaneWidthAngle, // in radians
+               wp,
+               scene.dt,
+               scene.cameraDistance,
+               scene.cameraTheta,
+               scene.cameraPhi);
+
+        // 8. Save output
+        bool ok = outputImage.save(output);
+        if (!ok) ok = outputImage.save(output, "PNG");
+
+        if (!ok) {
+            std::cerr << "Failed to save output image: "
+                      << output.toStdString() << "\n";
+            return 1;
+        }
+
+        std::cout << "Saved rendered image to "
+                  << output.toStdString() << "\n";
+
     }
-
-    std::cout << "Saved rendered image to "
-              << scene.outputPath.toStdString() << "\n";
     return 0;
+
+
 }
 

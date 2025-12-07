@@ -32,6 +32,8 @@ add_executable(${PROJECT_NAME}
   src/raytrace.cpp
   src/utils/scenefileparser.cpp
   src/utils/scenefileparser.h
+  src/camerapath.cpp
+  src/camerapath.h
 
 )
 
