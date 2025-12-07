@@ -6,6 +6,8 @@
 #include <vector>
 #include <iostream>
 #include <cmath>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include "src/utils/rgba.h"
 #include "src/raytrace.h"
@@ -77,6 +79,134 @@ RGBA sampleCelestial(const ImageData &img, double theta, double phi)
     return img.pixels[y * img.width + x];
 }
 
+// this function traces the rays using the equatorial symmetry method
+// see https://www.youtube.com/watch?v=PVO8nvb1o2w for the explanation of this method
+void renderEquatorial(RGBA *framebuffer,
+    int outWidth,
+    int outHeight,
+    const ImageData &sphereUpper,
+    const ImageData &sphereLower,
+    double fovW,
+    WormholeParams wp,
+    double dt,
+    double cameraDistance) {
+
+    // Camera setup
+    const double l_c     = cameraDistance;
+    const double theta_c = M_PI / 2.0; // equatorial
+    const double phi_c   = 0; // will eventually make changes to this
+
+    // Aspect ratio and vertical FOV
+    double aspect   = static_cast<double>(outHeight) / static_cast<double>(outWidth);
+
+    // Loop over pixels
+    double planeWidth = tan(fovW * 0.5);
+    double planeHeight = planeWidth * aspect;
+    double lengthDiagonal = sqrt(planeWidth*planeWidth + planeHeight*planeHeight);
+
+    // Integration constants (-0.01 seems good enough, but very slow...)
+    const double tMin = -200.0;
+    const double lMax = 20.0;
+
+    // compute the number of rays required to trace and store along the equator
+    const int precMultiplier = 2; // multiplier of the precision metric
+    int numRays = (outWidth + outHeight) * precMultiplier;
+    std::vector<RayState> rays(numRays+1);
+
+    // trace through the angles of these rays on the equatorial plane
+    for (int i = 0; i < numRays+1; i++) {
+        // Pinhole camera direction
+        double px = 1.0;
+        double py = lengthDiagonal * static_cast<double>(i) / static_cast<double>(numRays+1);
+        double pz = 0.0;
+
+        double normP = sqrt(px*px + py*py + pz*pz);
+        px /= normP;
+        py /= normP;
+        pz /= normP;
+
+        // Direction of incoming ray is -p
+        double n_l     = -px;
+        double n_phi   = -py;
+        double n_theta = pz;
+
+        // Initial state
+        RayState ray;
+        ray.l     = l_c;
+        ray.theta = theta_c;
+        ray.phi   = phi_c;
+
+        double r_c = r_of_l(ray.l, wp);
+
+        ray.p_l     = n_l;
+        ray.p_theta = r_c * n_theta;
+        ray.b       = r_c * sin(ray.theta) * n_phi;
+
+        // numerical integration
+        double t = 0.0;
+        while (t > tMin) {
+            rk4Step(ray, wp, dt);
+            if (abs(ray.l) > lMax) {
+                break;
+            }
+            t += dt;
+        }
+
+        // add the ray to the ray state
+        rays[i] = ray;
+    }
+
+    // sample the texture color based on the precomputed ray directions
+    for (int j = 0; j < outHeight; ++j) {
+        for (int i = 0; i < outWidth; ++i) {
+            int idx = j * outWidth + i;
+
+            // Normalized device coordinates in [-1,1]
+            double ndcW = 2.0 * ((i + 0.5) / static_cast<double>(outWidth))  - 1.0;
+            double ndcH = 2.0 * ((j + 0.5) / static_cast<double>(outHeight)) - 1.0;
+
+            // ray direction
+            glm::vec3 rayDir(1.0, planeWidth * (ndcW), planeHeight * (-ndcH));
+            glm::vec2 normalizedYZ = normalize(rayDir.yz());
+
+            // length at the yz-direction
+            double lengthYZ = length(rayDir.yz());
+            // get the precomputed ray
+            int rayInd = static_cast<int>(ceil(static_cast<double>(numRays) * (lengthYZ / lengthDiagonal)));
+            RayState equatorialRay = rays[rayInd];
+
+            // normalize the angles
+
+            // first, convert the final ray direction into a unit vector
+            glm::vec4 finalEuclidean(cos(equatorialRay.phi), sin(equatorialRay.phi), 0.0, 0.0);
+            // next, apply the transformation with respect to the tilting of the camera
+            glm::vec3 cameraDirection(cos(phi_c), sin(phi_c), 0.0);
+            // the angle to rotate about the camera direction
+            float angle = atan2(normalizedYZ.y, normalizedYZ.x);
+            glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), angle, glm::normalize(cameraDirection));
+            glm::vec4 rotatedEuclidean = rotationMatrix * finalEuclidean;
+
+            float thetaFinal = acos(rotatedEuclidean[2] / length(rotatedEuclidean));
+            float phiFinal = atan2(rotatedEuclidean[1], rotatedEuclidean[0]);
+
+            // break into cases where l<0 and l>0
+            RGBA color = {0, 0, 0, 255};
+
+            if (abs(equatorialRay.l) > lMax) {
+                if (equatorialRay.l > 0.0) {
+                    color = sampleCelestial(sphereUpper, thetaFinal, phiFinal);
+                } else {
+                    color = sampleCelestial(sphereLower, thetaFinal, phiFinal);
+                }
+            } else {
+                color = {0, 0, 0, 255};
+            }
+
+            framebuffer[idx] = color;
+        }
+    }
+}
+
 // this function traces the rays
 void render(
     RGBA *framebuffer,
@@ -89,6 +219,7 @@ void render(
     double dt,
     double cameraDistance)
 {
+
     // Camera setup
     const double l_c     = cameraDistance;
     const double theta_c = M_PI / 2.0; // equatorial
@@ -218,7 +349,7 @@ int main(int argc, char *argv[]) {
     WormholeParams wp{scene.rho, scene.a, scene.M};
 
     // 4. Render using FOV from config (scene.viewPlaneWidthAngle is in radians)
-    render(framebuffer,
+    renderEquatorial(framebuffer,
            scene.outWidth,
            scene.outHeight,
            sphereUpper,
