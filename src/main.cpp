@@ -112,6 +112,7 @@ void renderEquatorial(RGBA *framebuffer,
     const int precMultiplier = 2; // multiplier of the precision metric
     int numRays = (outWidth + outHeight) * precMultiplier;
     std::vector<RayState> rays(numRays+1);
+    std::vector<glm::vec4> rayPositions((numRays+1) * tMin);
 
     // trace through the angles of these rays on the equatorial plane
     for (int i = 0; i < numRays+1; i++) {
@@ -149,6 +150,9 @@ void renderEquatorial(RGBA *framebuffer,
             if (abs(ray.l) > lMax) {
                 break;
             }
+            // compute and store the position coordinates (x,y,z,l) in world space
+
+
             t += dt;
         }
 
