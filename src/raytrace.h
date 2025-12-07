@@ -1,9 +1,11 @@
 #pragma once
+#include <glm/glm.hpp>
 
 // Dneg wormhole without gravity, metric:
 // ds^2 = -dt^2 + dℓ^2 + r(ℓ)^2 (dθ^2 + sin^2θ dφ^2)
 //
 // r(ℓ) is defined piecewise: cylindrical interior, smoothed transition outside.
+
 struct WormholeParams {
     double rho;   // throat radius
     double a;     // half-length of cylindrical interior
@@ -18,6 +20,12 @@ struct RayState {
     double p_l;     // p_ℓ
     double p_theta; // p_θ
     double b;       // p_φ (impact parameter around polar axis)
+};
+
+// A struct that stores ray positions
+struct RayPosition {
+    glm::vec4 pos; // the Euclidean coords in world space
+    double l;
 };
 
 // Compute r(l) as in Equation 5a, 5b, 5c
