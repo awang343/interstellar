@@ -92,8 +92,8 @@ int main(int argc, char *argv[]) {
     WormholeParams wp{scene.rho, scene.a, scene.M};
 
     // make a sphere
-    glm::vec3 spherePos(3.0, 0.0, 0.0);
-    SphereData sphereData{spherePos, 0.5, length(spherePos)};
+    glm::vec3 spherePos(0.0, 2.0, 0.0);
+    SphereData sphereData{spherePos, 0.5, -length(spherePos)};
 
     // 4. Render using FOV from config (scene.viewPlaneWidthAngle is in radians)
     render(framebuffer,
