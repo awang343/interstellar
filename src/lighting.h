@@ -1,5 +1,5 @@
 #include <glm/glm.hpp>
-#include "renderer.h"
+#include "src/renderer.h"
 
 // Enum of the types of virtual lights that might be in the scene
 enum class LightType {
