@@ -12,6 +12,7 @@
 #include "src/raytrace.h"
 #include "utils/scenefileparser.h"
 #include "renderer.h"
+#include "lighting.h"
 
 
 // this function loads the two celestial sphere textures into image data
