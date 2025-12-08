@@ -1,5 +1,6 @@
 #include "lighting.h"
 #include "textures.h"
+#include <iostream>
 
 static glm::vec3 calc_light_vec(const glm::vec3 &point, const SceneLightData &light)
 {
@@ -35,7 +36,7 @@ glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bu
     // static const float ks = 1.f; // HARDCODED
     const float shininess = 0.5f;
 
-    const glm::vec3 obj_A = glm::vec3(1.f, 1.f, 1.f) * ka; // HARDCODED
+    const glm::vec3 obj_A = glm::vec3(0.f, 0.5f, 0.f) * ka; // HARDCODED
     glm::vec3 obj_D = glm::vec3(1.f, 1.f, 1.f) * kd;       // HARDCODED
     // const glm::vec3 obj_S = glm::vec3(1.f, 1.f, 1.f) * ks; // HARDCODED
 
@@ -123,6 +124,7 @@ glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bu
 
         pixel_color += phong * light_intensity;
     }
+    std::cout << "pixel color: " << pixel_color.x << ", " << pixel_color.y << ", " << pixel_color.z << std::endl;
 
     return glm::clamp(pixel_color, 0.f, 1.f);
 }
