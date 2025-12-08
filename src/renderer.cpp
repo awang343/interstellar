@@ -189,8 +189,9 @@ void renderEquatorial(RGBA *framebuffer,
 
                         // sample the texture color
                         glm::vec4 posIntersection(normalize(posEuclidean - sphereData.center) * sphereData.radius  + sphereData.center, 1.0);
-                        glm::vec3 dirToCamera = glm::vec3(rayPositions[k-1 + rayInd * numRayPositions] - pos);
+                        glm::vec3 dirToCamera = normalize(glm::vec3(rayPositions[k-1 + rayInd * numRayPositions] - pos));
                     }
+
                 }
             }
 
