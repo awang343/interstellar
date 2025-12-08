@@ -2,11 +2,11 @@
 #include "glm/fwd.hpp"
 #include <iostream>
 
-uv get_uv(const Hit &hit)
+uv get_uv(const glm::vec3 &obj_point)
 {
-    const float theta = atan2(hit.point.z, hit.point.x);
+    const float theta = atan2(obj_point.z, obj_point.x);
     const float u = theta < 0 ? -(theta) / (2.f * M_PI) : 1.f - (theta) / (2.f * M_PI);
-    const float v = asin(hit.point.y / 0.5f) / M_PI + .5f;
+    const float v = asin(obj_point.y / 0.5f) / M_PI + .5f;
     return uv{u, v};
 }
 

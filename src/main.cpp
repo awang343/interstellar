@@ -110,7 +110,8 @@ int main(int argc, char *argv[]) {
            wp,
            scene.dt,
            scene.cameraDistance,
-           sphereData);
+           sphereData,
+           std::vector<SceneLightData>{light});
 
     // 5. Save output
     bool ok = outputImage.save(scene.outputPath);
