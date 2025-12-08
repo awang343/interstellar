@@ -20,6 +20,8 @@ struct sceneInfo {
 
     double dt;
     double cameraDistance;
+    double cameraTheta = M_PI/2.0f;
+    double cameraPhi = 0.0f;
 };
 
 
