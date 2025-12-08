@@ -30,13 +30,46 @@ RGBA sampleCelestial(const ImageData &img, float theta, float phi)
     float u = phiNorm / twoPi;
     float v = thetaClamped / M_PI;
 
-    int x = static_cast<int>(u * (img.width - 1));
-    int y = static_cast<int>(v * (img.height - 1));
+    float x_float = u * (img.width - 1);
+    float y_float = v * (img.height - 1);
 
-    x = std::max(0, std::min(img.width - 1, x));
-    y = std::max(0, std::min(img.height - 1, y));
+    int x0 = static_cast<int>(std::floor(x_float));
+    int x1 = x0 + 1;
+    int y0 = static_cast<int>(std::floor(y_float));
+    int y1 = y0 + 1;
 
-    return img.pixels[y * img.width + x];
+    x0 = std::max(0, std::min(img.width - 1, x0));
+    x1 = std::max(0, std::min(img.width - 1, x1));
+    y0 = std::max(0, std::min(img.height - 1, y0));
+    y1 = std::max(0, std::min(img.height - 1, y1));
+
+    float alpha_x = x_float - std::floor(x_float);
+    float alpha_y = y_float - std::floor(y_float);
+
+    RGBA c00 = img.pixels[y0 * img.width + x0]; // top-left
+    RGBA c10 = img.pixels[y0 * img.width + x1]; // top-right
+    RGBA c01 = img.pixels[y1 * img.width + x0]; // bottom-left
+    RGBA c11 = img.pixels[y1 * img.width + x1]; // bottom-right
+
+    // Bilinear interpolation
+    // horizontal interpolation 
+    float r_top = c00.r * (1.0f - alpha_x) + c10.r * alpha_x;
+    float g_top = c00.g * (1.0f - alpha_x) + c10.g * alpha_x;
+    float b_top = c00.b * (1.0f - alpha_x) + c10.b * alpha_x;
+    float a_top = c00.a * (1.0f - alpha_x) + c10.a * alpha_x;
+    
+    float r_bottom = c01.r * (1.0f - alpha_x) + c11.r * alpha_x;
+    float g_bottom = c01.g * (1.0f - alpha_x) + c11.g * alpha_x;
+    float b_bottom = c01.b * (1.0f - alpha_x) + c11.b * alpha_x;
+    float a_bottom = c01.a * (1.0f - alpha_x) + c11.a * alpha_x;
+    
+    // vertical interpolation
+    uint8_t r_final = static_cast<uint8_t>(r_top * (1.0f - alpha_y) + r_bottom * alpha_y);
+    uint8_t g_final = static_cast<uint8_t>(g_top * (1.0f - alpha_y) + g_bottom * alpha_y);
+    uint8_t b_final = static_cast<uint8_t>(b_top * (1.0f - alpha_y) + b_bottom * alpha_y);
+    uint8_t a_final = static_cast<uint8_t>(a_top * (1.0f - alpha_y) + a_bottom * alpha_y);
+    
+    return {r_final, g_final, b_final, a_final};
 }
 
 // this function traces the rays using the equatorial symmetry method
