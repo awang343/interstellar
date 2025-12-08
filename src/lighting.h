@@ -1,3 +1,4 @@
+#pragma once
 #include <glm/glm.hpp>
 #include "src/renderer.h"
 
@@ -25,9 +26,8 @@ struct SceneLightData {
 struct Hit
 {
     glm::vec4 point;
-    glm::vec3 normal;
     glm::vec3 to_camera;
-    SphereData *sphere;
+    SphereData &sphere;
 };
 
 
