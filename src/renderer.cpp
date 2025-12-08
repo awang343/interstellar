@@ -5,7 +5,6 @@
 #include <cmath>
 #include <glm/gtc/matrix_transform.hpp>
 #include <vector>
-#include <iostream>
 
 // this function samples the celestial sphere texture gased on given theta and phi
 RGBA sampleCelestial(const ImageData &img, float theta, float phi)
@@ -41,7 +40,7 @@ RGBA sampleCelestial(const ImageData &img, float theta, float phi)
 // see https://www.youtube.com/watch?v=PVO8nvb1o2w for the explanation of this method
 void render(RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sphereUpper,
             const ImageData &sphereLower, const ImageData &primitiveTexture, float fovW,
-            WormholeParams wp, float dt, float cameraDistance, SphereData sphereData)
+            WormholeParams wp, float dt, float cameraDistance, SphereData sphereData, std::vector<SceneLightData> lights)
 {
 
     // Camera setup
