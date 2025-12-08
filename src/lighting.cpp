@@ -124,7 +124,6 @@ glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bu
 
         pixel_color += phong * light_intensity;
     }
-    std::cout << "pixel color: " << pixel_color.x << ", " << pixel_color.y << ", " << pixel_color.z << std::endl;
 
     return glm::clamp(pixel_color, 0.f, 1.f);
 }
