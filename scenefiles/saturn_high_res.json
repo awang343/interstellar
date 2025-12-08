@@ -1,6 +1,7 @@
 {
   "upperTexture": "texture/saturn.png",
   "lowerTexture": "texture/stars.png",
+  "primitiveTexture": "texture/bricks.jpg",
   "outputImage": "output/saturn_high_res.png",
 
   "rho": 1.0,

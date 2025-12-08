@@ -1,7 +1,7 @@
 #include "scenefileparser.h"
 #include <iostream>
 
-bool loadSceneInfoFromJson(const QString &path, sceneInfo &outScene)
+bool loadSceneInfoFromJson(const QString &path, SceneInfo &outScene)
 {
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
@@ -27,6 +27,10 @@ bool loadSceneInfoFromJson(const QString &path, sceneInfo &outScene)
 
     QJsonObject obj = doc.object();
 
+    // ----------------------
+    //   Helper lambdas
+    // ----------------------
+
     auto getString = [&](const QString &key, QString &dst) {
         if (!obj.contains(key) || !obj[key].isString()) {
             std::cerr << "Missing or invalid string field: "
@@ -37,13 +41,13 @@ bool loadSceneInfoFromJson(const QString &path, sceneInfo &outScene)
         return true;
     };
 
-    auto getDouble = [&](const QString &key, double &dst) {
+    auto getFloat = [&](const QString &key, float &dst) {
         if (!obj.contains(key) || !obj[key].isDouble()) {
-            std::cerr << "Missing or invalid double field: "
+            std::cerr << "Missing or invalid float field: "
                       << key.toStdString() << "\n";
             return false;
         }
-        dst = obj[key].toDouble();
+        dst = static_cast<float>(obj[key].toDouble());
         return true;
     };
 
@@ -57,28 +61,44 @@ bool loadSceneInfoFromJson(const QString &path, sceneInfo &outScene)
         return true;
     };
 
-    // Read paths
-    if (!getString("upperTexture",  outScene.upperTexturePath)) return false;
-    if (!getString("lowerTexture",  outScene.lowerTexturePath)) return false;
-    if (!getString("outputImage",   outScene.outputPath))       return false;
+    // ----------------------
+    //   Texture paths
+    // ----------------------
 
-    // Wormhole parameters
-    if (!getDouble("rho", outScene.rho)) return false;
-    if (!getDouble("a",   outScene.a))   return false;
-    if (!getDouble("M",   outScene.M))   return false;
+    if (!getString("upperTexture",     outScene.upperTexturePath))     return false;
+    if (!getString("lowerTexture",     outScene.lowerTexturePath))     return false;
+    if (!getString("primitiveTexture", outScene.primitiveTexturePath)) return false;  // NEW
+    if (!getString("outputImage",      outScene.outputPath))           return false;
 
-    // Resolution
+    // ----------------------
+    //   Wormhole parameters
+    // ----------------------
+
+    if (!getFloat("rho", outScene.rho)) return false;
+    if (!getFloat("a",   outScene.a))   return false;
+    if (!getFloat("M",   outScene.M))   return false;
+
+    // ----------------------
+    //   Output resolution
+    // ----------------------
+
     if (!getInt("outWidth",  outScene.outWidth))  return false;
     if (!getInt("outHeight", outScene.outHeight)) return false;
 
-    // FOV (in degrees), convert to radians
-    double fovDeg;
-    if (!getDouble("viewPlaneWidthAngle", fovDeg)) return false;
-    outScene.viewPlaneWidthAngle = fovDeg * M_PI / 180.0;
+    // ----------------------
+    //   FOV (degrees → radians)
+    // ----------------------
 
-    // NEW fields
-    if (!getDouble("dt", outScene.dt)) return false;
-    if (!getDouble("cameraDistance", outScene.cameraDistance)) return false;
+    float fovDeg;
+    if (!getFloat("viewPlaneWidthAngle", fovDeg)) return false;
+    outScene.viewPlaneWidthAngle = fovDeg * M_PI / 180.0f;
+
+    // ----------------------
+    //   New fields
+    // ----------------------
+
+    if (!getFloat("dt", outScene.dt)) return false;
+    if (!getFloat("cameraDistance", outScene.cameraDistance)) return false;
 
     return true;
 }

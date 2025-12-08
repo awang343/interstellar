@@ -2,58 +2,58 @@
 #include <cmath>
 
 // Compute r(l) as in Equation 5a, 5b, 5c
-double r_of_l(double l, const WormholeParams &p) {
-    double absL = std::fabs(l);
+float r_of_l(float l, const WormholeParams &p) {
+    float absL = std::fabs(l);
     // Equation 5a
     if (absL <= p.a) {
         return p.rho;
     }
 
     // set up x = 2(|l| - a) / (π M)
-    double x = 2.0 * (absL - p.a) / (M_PI * p.M);
+    float x = 2.0 * (absL - p.a) / (M_PI * p.M);
 
     // r = ρ + M [ x arctan(x) - 0.5 ln(1 + x^2) ]
-    double term = x * atan(x) - 0.5 * log(1.0 + x * x);
+    float term = x * atan(x) - 0.5 * log(1.0 + x * x);
     return p.rho + p.M * term;
 }
 
 // Compute dr/dl as in Equation 5a
-double drdl_of_l(double l, const WormholeParams &p) {
-    double absL = std::fabs(l);
+float drdl_of_l(float l, const WormholeParams &p) {
+    float absL = std::fabs(l);
     if (absL <= p.a) {
         return 0.0;
     }
 
     // derivative wrt |l|-a of the integral form in 5a gives
     // d/d(|l|-a) r = (2/π) arctan(2(|l|-a)/(πM))
-    double x = 2.0 * (absL - p.a) / (M_PI * p.M);
-    double dterm_dabs = (2.0 / M_PI) * atan(x);
+    float x = 2.0 * (absL - p.a) / (M_PI * p.M);
+    float dterm_dabs = (2.0 / M_PI) * atan(x);
 
-    double sign = (l >= 0.0) ? 1.0 : -1.0;
+    float sign = (l >= 0.0) ? 1.0 : -1.0;
     return dterm_dabs * sign;
 }
 
 // Compute derivatives d/dt of the state as in Equation A.7
 void geodesicDeriv(const RayState &s,
                    const WormholeParams &wp,
-                   double &d_l,
-                   double &d_theta,
-                   double &d_phi,
-                   double &d_p_l,
-                   double &d_p_theta) {
-    double r = r_of_l(s.l, wp);
-    double drdl = drdl_of_l(s.l, wp);
+                   float &d_l,
+                   float &d_theta,
+                   float &d_phi,
+                   float &d_p_l,
+                   float &d_p_theta) {
+    float r = r_of_l(s.l, wp);
+    float drdl = drdl_of_l(s.l, wp);
 
-    double sinT = sin(s.theta);
-    double cosT = cos(s.theta);
+    float sinT = sin(s.theta);
+    float cosT = cos(s.theta);
     // avoid dividing by zero
-    const double eps = 1e-6;
+    const float eps = 1e-6;
     if (std::fabs(sinT) < eps) {
         sinT = (sinT >= 0.0 ? eps : -eps);
     }
 
     // Compute B^2 = p_θ^2 + b^2 / sin^2θ as in Equation A.5b
-    double B2 = s.p_theta * s.p_theta + (s.b * s.b) / (sinT * sinT);
+    float B2 = s.p_theta * s.p_theta + (s.b * s.b) / (sinT * sinT);
 
     // Equations of motion
     d_l      = s.p_l;
@@ -64,8 +64,8 @@ void geodesicDeriv(const RayState &s,
 }
 
 // One Euler's method step for numerically solving the geodesic ODE
-void odeStep(RayState &s, const WormholeParams &wp, double dt) {
-    double k_l, k_theta, k_phi, k_p_l, k_p_theta;
+void odeStep(RayState &s, const WormholeParams &wp, float dt) {
+    float k_l, k_theta, k_phi, k_p_l, k_p_theta;
 
     // obtain the partial derivatives
     geodesicDeriv(s, wp, k_l, k_theta, k_phi, k_p_l, k_p_theta);
@@ -79,11 +79,11 @@ void odeStep(RayState &s, const WormholeParams &wp, double dt) {
 }
 
 // One RK4 step for numerically solving the geodesic ODE
-void rk4Step(RayState &s, const WormholeParams &wp, double dt) {
-    double k1_l, k1_theta, k1_phi, k1_p_l, k1_p_theta;
-    double k2_l, k2_theta, k2_phi, k2_p_l, k2_p_theta;
-    double k3_l, k3_theta, k3_phi, k3_p_l, k3_p_theta;
-    double k4_l, k4_theta, k4_phi, k4_p_l, k4_p_theta;
+void rk4Step(RayState &s, const WormholeParams &wp, float dt) {
+    float k1_l, k1_theta, k1_phi, k1_p_l, k1_p_theta;
+    float k2_l, k2_theta, k2_phi, k2_p_l, k2_p_theta;
+    float k3_l, k3_theta, k3_phi, k3_p_l, k3_p_theta;
+    float k4_l, k4_theta, k4_phi, k4_p_l, k4_p_theta;
 
     // k1
     geodesicDeriv(s, wp, k1_l, k1_theta, k1_phi, k1_p_l, k1_p_theta);
