@@ -39,7 +39,7 @@ glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bu
     glm::vec3 obj_D = glm::vec3(1.f, 1.f, 1.f) * kd;       // HARDCODED
     // const glm::vec3 obj_S = glm::vec3(1.f, 1.f, 1.f) * ks; // HARDCODED
 
-    const glm::vec4 intersect = hit.point;
+    const glm::vec4 obj_point = hit.point - glm::vec4(hit.sphere->center, 0.f); // point in object space
     // const glm::mat3 transform = glm::inverse(glm::transpose(glm::mat3(hit.shape->ctm)));
 
     const uv uv_map = get_uv(hit);
@@ -67,15 +67,15 @@ glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bu
 
     for (const SceneLightData &light : lights)
     {
-        if (light.pos[3] != intersect[3])
+        if (light.pos[3] != obj_point[3])
         {
             continue;
         }
 
         glm::vec3 phong(0.f);
 
-        const glm::vec3 to_light = calc_light_vec(intersect, light);
-        const glm::vec3 L_i = glm::normalize(to_light);
+        const glm::vec3 to_light = calc_light_vec(obj_point, light);
+        const glm::vec3 L_i = glm::normalize(to_light); // Vector from point to light
         const glm::vec3 R = glm::normalize(2.f * glm::dot(L_i, N) * N - L_i);
 
         const float D_intensity = std::max(glm::dot(N, L_i), 0.f);
@@ -116,7 +116,7 @@ glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bu
         // Attenuation effect
         if (!directional && light_intensity > 1e-6f)
         {
-            const float dist = glm::distance(glm::vec3(intersect), glm::vec3(light.pos));
+            const float dist = glm::distance(glm::vec3(obj_point), glm::vec3(light.pos));
             const float mult = 1.f / glm::dot(light.function, glm::vec3(1.f, dist, dist * dist));
             light_intensity *= std::min(1.f, mult);
         }
