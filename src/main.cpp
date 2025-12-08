@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
     SphereData sphereData{spherePos, 0.5, -length(spherePos)};
 
     // make point light
-    SceneLightData light{LightType::LIGHT_POINT, glm::vec4(1.0), glm::vec3(1.0), glm::vec4(0.0, 2.0, 3.0, 1.0), glm::vec3(0.0, 0.0, -1.0), 1.0, 1.0};
+    SceneLightData light{LightType::LIGHT_POINT, glm::vec4(1.0), glm::vec3(1.0), glm::vec4(0.0, 2.0, 3.0, -1.0), glm::vec3(0.0, 0.0, -1.0), 1.0, 1.0};
 
     // 4. Render using FOV from config (scene.viewPlaneWidthAngle is in radians)
     render(framebuffer,
