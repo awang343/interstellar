@@ -1,8 +1,16 @@
 #pragma once
 
+#include "utils/rgba.h"
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
+
+// a struct containing info of an image
+struct ImageData {
+    int width  = 0;
+    int height = 0;
+    std::vector<RGBA> pixels;  // size = width * height
+};
 
 struct sceneInfo {
     QString upperTexturePath;
