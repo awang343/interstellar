@@ -1,15 +1,17 @@
 #pragma once
-#include <glm/glm.hpp>
 #include "src/renderer.h"
+#include <glm/glm.hpp>
 
 // Enum of the types of virtual lights that might be in the scene
-enum class LightType {
+enum class LightType
+{
     LIGHT_POINT,
     LIGHT_DIRECTIONAL,
     LIGHT_SPOT,
 };
 
-struct SceneLightData {
+struct SceneLightData
+{
     int id;
     LightType type;
 
@@ -30,6 +32,13 @@ struct Hit
     SphereData &sphere;
 };
 
+struct BumpMap
+{
+    glm::vec2 *gradients;
+    int width;
+    int height;
+};
 
 // Both camera_direction and sphere_point should be in object space
-glm::vec3 shadePixel(const glm::vec3 &sphere_point, const glm::vec3 &dir_to_camera);
+glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bump_map,
+                     const std::vector<SceneLightData> &lights);

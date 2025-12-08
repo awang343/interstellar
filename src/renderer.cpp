@@ -1,4 +1,5 @@
 #include "renderer.h"
+#include "lighting.h"
 
 #include <algorithm>
 #include <cmath>
@@ -192,7 +193,10 @@ void render(RGBA *framebuffer,
                         glm::vec4 posIntersection(normalize(posEuclidean - sphereData.center) * sphereData.radius  + sphereData.center, 1.0);
                         glm::vec3 dirToCamera = normalize(glm::vec3(rayPositions[k-1 + rayInd * numRayPositions] - pos));
 
-
+                        color = shadePixel(posIntersection,
+                                           dirToCamera,
+                                           primitiveTexture,
+                                           sphereData);
                     }
 
                 }

@@ -2,13 +2,6 @@
 #include "lighting.h"
 #include <glm/glm.hpp>
 
-struct BumpMap
-{
-    glm::vec2 *gradients;
-    int width;
-    int height;
-};
-
 struct uv
 {
     float u;
