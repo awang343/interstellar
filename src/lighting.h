@@ -1,4 +1,5 @@
 #include <glm/glm.hpp>
+#include "renderer.h"
 
 // Enum of the types of virtual lights that might be in the scene
 enum class LightType {
@@ -14,17 +15,19 @@ struct SceneLightData {
     glm::vec4 color;
     glm::vec3 function; // Attenuation function
 
-    glm::vec4 pos; // Position with CTM applied (Not applicable to directional lights)
-    glm::vec4 dir; // Direction with CTM applied (Not applicable to point lights)
+    glm::vec4 pos;
+    glm::vec3 dir;
 
-    float penumbra; // Only applicable to spot lights, in RADIANS
-    float angle;    // Only applicable to spot lights, in RADIANS
+    float penumbra;
+    float angle;
 };
 
 struct Hit
 {
-    glm::vec3 point;
+    glm::vec4 point;
     glm::vec3 normal;
+    glm::vec3 to_camera;
+    SphereData *sphere;
 };
 
 

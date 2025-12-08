@@ -27,20 +27,19 @@ static inline float calc_falloff(const float &inner, const float &outer, const f
     return -2 * interm * interm * interm + 3 * interm * interm;
 }
 
-glm::vec3 shadePixel(const Hit &hit, const glm::vec3 &world_camera, const ImageData &texture,
-                     const BumpMap &bump_map, const std::vector<SceneLightData> &lights)
+glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bump_map,
+                     const std::vector<SceneLightData> &lights)
 {
     static const float ka = 1.f; // HARDCODED
     static const float kd = 1.f; // HARDCODED
-    static const float ks = 1.f; // HARDCODED
+    // static const float ks = 1.f; // HARDCODED
+    const float shininess = 0.5f;
 
     const glm::vec3 obj_A = glm::vec3(1.f, 1.f, 1.f) * ka; // HARDCODED
     glm::vec3 obj_D = glm::vec3(1.f, 1.f, 1.f) * kd;       // HARDCODED
-    const glm::vec3 obj_S = glm::vec3(1.f, 1.f, 1.f) * ks; // HARDCODED
+    // const glm::vec3 obj_S = glm::vec3(1.f, 1.f, 1.f) * ks; // HARDCODED
 
-    const float shininess = 0.5f;
-
-    const glm::vec4 intersect = glm::vec4(hit.point, 1.f);
+    const glm::vec4 intersect = hit.point;
     // const glm::mat3 transform = glm::inverse(glm::transpose(glm::mat3(hit.shape->ctm)));
 
     const uv uv_map = get_uv(hit);
@@ -51,7 +50,7 @@ glm::vec3 shadePixel(const Hit &hit, const glm::vec3 &world_camera, const ImageD
             ? get_bump_normal(bump_map, hit, FilterType::Bilinear, uv_map, 0.01)
             : hit.normal;
     const glm::vec3 N = glm::normalize(/*transform **/ obj_normal);
-    const glm::vec3 V = glm::normalize(world_camera - glm::vec3(intersect));
+    // const glm::vec3 V = glm::normalize(world_camera - glm::vec3(intersect));
 
     // Blend obj_D with textures
     const bool enableTextureMap = true;                    // HARDCODED
@@ -68,6 +67,11 @@ glm::vec3 shadePixel(const Hit &hit, const glm::vec3 &world_camera, const ImageD
 
     for (const SceneLightData &light : lights)
     {
+        if (light.pos[3] != intersect[3])
+        {
+            continue;
+        }
+
         glm::vec3 phong(0.f);
 
         const glm::vec3 to_light = calc_light_vec(intersect, light);
@@ -75,13 +79,13 @@ glm::vec3 shadePixel(const Hit &hit, const glm::vec3 &world_camera, const ImageD
         const glm::vec3 R = glm::normalize(2.f * glm::dot(L_i, N) * N - L_i);
 
         const float D_intensity = std::max(glm::dot(N, L_i), 0.f);
-        const float S_intensity = std::pow(std::max(glm::dot(R, V), 0.f), shininess);
+        // const float S_intensity = std::pow(std::max(glm::dot(R, V), 0.f), shininess);
 
         const glm::vec3 D_color = glm::vec3(light.color) * obj_D;
-        const glm::vec3 S_color = glm::vec3(light.color) * obj_S;
+        // const glm::vec3 S_color = glm::vec3(light.color) * obj_S;
 
         phong += D_color * D_intensity;
-        phong += S_color * S_intensity;
+        // phong += S_color * S_intensity;
 
         if (glm::length(phong) < 1e-5f)
         {
