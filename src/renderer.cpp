@@ -6,23 +6,23 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 // this function samples the celestial sphere texture gased on given theta and phi
-RGBA sampleCelestial(const ImageData &img, double theta, double phi)
+RGBA sampleCelestial(const ImageData &img, float theta, float phi)
 {
     if (img.width == 0 || img.height == 0) {
         return {0, 0, 0, 255};
     }
 
     // Normalize φ to [0, 2π)
-    double twoPi = 2.0 * M_PI;
-    double phiNorm = std::fmod(phi, twoPi);
+    float twoPi = 2.0 * M_PI;
+    float phiNorm = std::fmod(phi, twoPi);
     if (phiNorm < 0.0) phiNorm += twoPi;
 
     // θ in [0, π] ideally; clamp
-    double thetaClamped = std::max(0.0, std::min(M_PI, theta));
+    float thetaClamped = std::max(0.0, std::fmin(M_PI, theta));
 
     // longitude-latitude map: u = φ / (2π), v = θ / π
-    double u = phiNorm / twoPi;
-    double v = thetaClamped / M_PI;
+    float u = phiNorm / twoPi;
+    float v = thetaClamped / M_PI;
 
     int x = static_cast<int>(u * (img.width  - 1));
     int y = static_cast<int>(v * (img.height - 1));
@@ -40,28 +40,28 @@ void renderEquatorial(RGBA *framebuffer,
                       int outHeight,
                       const ImageData &sphereUpper,
                       const ImageData &sphereLower,
-                      double fovW,
+                      float fovW,
                       WormholeParams wp,
-                      double dt,
-                      double cameraDistance,
+                      float dt,
+                      float cameraDistance,
                       SphereData sphereData) {
 
     // Camera setup
-    const double l_c     = cameraDistance;
-    const double theta_c = M_PI / 2.0; // equatorial
-    const double phi_c   = 0; // will eventually make changes to this
+    const float l_c     = cameraDistance;
+    const float theta_c = M_PI / 2.0; // equatorial
+    const float phi_c   = 0; // will eventually make changes to this
 
     // Aspect ratio and vertical FOV
-    double aspect   = static_cast<double>(outHeight) / static_cast<double>(outWidth);
+    float aspect   = static_cast<float>(outHeight) / static_cast<float>(outWidth);
 
     // Loop over pixels
-    double planeWidth = tan(fovW * 0.5);
-    double planeHeight = planeWidth * aspect;
-    double lengthDiagonal = sqrt(planeWidth*planeWidth + planeHeight*planeHeight);
+    float planeWidth = tan(fovW * 0.5);
+    float planeHeight = planeWidth * aspect;
+    float lengthDiagonal = sqrt(planeWidth*planeWidth + planeHeight*planeHeight);
 
     // Integration constants (-0.01 seems good enough, but very slow...)
-    const double tMin = -200.0;
-    const double lMax = 20.0;
+    const float tMin = -200.0;
+    const float lMax = 20.0;
 
     // compute the number of rays required to trace and store along the equator
     const int precMultiplier = 2; // multiplier of the precision metric
@@ -75,19 +75,19 @@ void renderEquatorial(RGBA *framebuffer,
     // trace through the angles of these rays on the equatorial plane
     for (int i = 0; i < numRays+1; i++) {
         // Pinhole camera direction
-        double px = 1.0;
-        double py = lengthDiagonal * static_cast<double>(i) / static_cast<double>(numRays+1);
-        double pz = 0.0;
+        float px = 1.0;
+        float py = lengthDiagonal * static_cast<float>(i) / static_cast<float>(numRays+1);
+        float pz = 0.0;
 
-        double normP = sqrt(px*px + py*py + pz*pz);
+        float normP = sqrt(px*px + py*py + pz*pz);
         px /= normP;
         py /= normP;
         pz /= normP;
 
         // Direction of incoming ray is -p
-        double n_l     = -px;
-        double n_phi   = -py;
-        double n_theta = pz;
+        float n_l     = -px;
+        float n_phi   = -py;
+        float n_theta = pz;
 
         // Initial state
         RayState ray;
@@ -95,13 +95,13 @@ void renderEquatorial(RGBA *framebuffer,
         ray.theta = theta_c;
         ray.phi   = phi_c;
 
-        double r_c = r_of_l(ray.l, wp);
+        float r_c = r_of_l(ray.l, wp);
         ray.p_l     = n_l;
         ray.p_theta = r_c * n_theta;
         ray.b       = r_c * sin(ray.theta) * n_phi;
 
         // numerical integration
-        double t = 0.0;
+        float t = 0.0;
         int counter = 0;
         while (t > tMin) {
             rk4Step(ray, wp, dt);
@@ -135,8 +135,8 @@ void renderEquatorial(RGBA *framebuffer,
     }
 
     // the l interval that contains the sphere
-    double lMinSphere = sphereData.l - sphereData.radius;
-    double lMaxSphere = sphereData.l + sphereData.radius;
+    float lMinSphere = sphereData.l - sphereData.radius;
+    float lMaxSphere = sphereData.l + sphereData.radius;
 
     // sample the texture color based on the precomputed ray directions
     for (int j = 0; j < outHeight; ++j) {
@@ -144,17 +144,17 @@ void renderEquatorial(RGBA *framebuffer,
             int idx = j * outWidth + i;
 
             // Normalized device coordinates in [-1,1]
-            double ndcW = 2.0 * ((i + 0.5) / static_cast<double>(outWidth))  - 1.0;
-            double ndcH = 2.0 * ((j + 0.5) / static_cast<double>(outHeight)) - 1.0;
+            float ndcW = 2.0 * ((i + 0.5) / static_cast<float>(outWidth))  - 1.0;
+            float ndcH = 2.0 * ((j + 0.5) / static_cast<float>(outHeight)) - 1.0;
 
             // ray direction
             glm::vec3 rayDir(1.0, planeWidth * (ndcW), planeHeight * (-ndcH));
             glm::vec2 normalizedYZ = normalize(rayDir.yz());
 
             // length at the yz-direction
-            double lengthYZ = length(rayDir.yz());
+            float lengthYZ = length(rayDir.yz());
             // get the precomputed ray
-            int rayInd = static_cast<int>(ceil(static_cast<double>(numRays) * (lengthYZ / lengthDiagonal)));
+            int rayInd = static_cast<int>(ceil(static_cast<float>(numRays) * (lengthYZ / lengthDiagonal)));
             RayState equatorialRay = rays[rayInd];
 
             // normalize the angles
@@ -170,25 +170,30 @@ void renderEquatorial(RGBA *framebuffer,
             float thetaFinal = acos(rotatedEuclidean[2] / length(rotatedEuclidean));
             float phiFinal = atan2(rotatedEuclidean[1], rotatedEuclidean[0]);
 
-            // break into cases where l<0 and l>0
-            RGBA color = {255, 0, 0, 255};
+            // sample the color
+            RGBA color = {0, 0, 0, 255};
 
             // if it intersects the sphere, display the color on the sphere
             bool intersectsSphere = false;
 
-            for (int k = 0; k < rayPositionCounts[rayInd]; k++) {
+            for (int k = 1; k < rayPositionCounts[rayInd]; k++) {
                 if (intersectsSphere) {
                     break;
                 }
                 glm::vec4 pos = rayPositions[k + rayInd * numRayPositions];
                 if (pos[3] >= lMinSphere && pos[3] <= lMaxSphere) {
                     glm::vec3 posEuclidean(pos);
-                    if (length(glm::vec3(rotationMatrix * glm::vec4(posEuclidean, 1.0)) - sphereData.center) - sphereData.radius < 0.0) {
+                    posEuclidean = glm::vec3(rotationMatrix * glm::vec4(posEuclidean, 1.0));
+                    if (length(posEuclidean - sphereData.center) - sphereData.radius < 0.0) {
                         intersectsSphere = true;
 
                         // sample the texture color
+                        glm::vec4 posIntersection(normalize(posEuclidean - sphereData.center) * sphereData.radius  + sphereData.center, 1.0);
+                        glm::vec3 dirToCamera = normalize(glm::vec3(rayPositions[k-1 + rayInd * numRayPositions] - pos));
+
 
                     }
+
                 }
             }
 
@@ -215,27 +220,27 @@ void renderEquatorial(RGBA *framebuffer,
 //     int outHeight,
 //     const ImageData &sphereUpper,
 //     const ImageData &sphereLower,
-//     double fovW,
+//     float fovW,
 //     WormholeParams wp,
-//     double dt,
-//     double cameraDistance)
+//     float dt,
+//     float cameraDistance)
 // {
 
 //     // Camera setup
-//     const double l_c     = cameraDistance;
-//     const double theta_c = M_PI / 2.0; // equatorial
-//     const double phi_c   = 0;
+//     const float l_c     = cameraDistance;
+//     const float theta_c = M_PI / 2.0; // equatorial
+//     const float phi_c   = 0;
 
 //     // Aspect ratio and vertical FOV
-//     double aspect   = static_cast<double>(outHeight) / static_cast<double>(outWidth);
+//     float aspect   = static_cast<float>(outHeight) / static_cast<float>(outWidth);
 
 //     // Loop over pixels
-//     double planeWidth = tan(fovW * 0.5);
-//     double planeHeight = planeWidth * aspect;
+//     float planeWidth = tan(fovW * 0.5);
+//     float planeHeight = planeWidth * aspect;
 
 //     // Integration constants (-0.01 seems good enough, but very slow...)
-//     const double tMin = -200.0;
-//     const double lMax = 20.0;
+//     const float tMin = -200.0;
+//     const float lMax = 20.0;
 
 //     for (int j = 0; j < outHeight; ++j) {
 //         for (int i = 0; i < outWidth; ++i) {
@@ -246,23 +251,23 @@ void renderEquatorial(RGBA *framebuffer,
 //             }
 
 //             // Normalized device coordinates in [-1,1]
-//             double ndcW = 2.0 * ((i + 0.5) / static_cast<double>(outWidth))  - 1.0;
-//             double ndcH = 2.0 * ((j + 0.5) / static_cast<double>(outHeight)) - 1.0;
+//             float ndcW = 2.0 * ((i + 0.5) / static_cast<float>(outWidth))  - 1.0;
+//             float ndcH = 2.0 * ((j + 0.5) / static_cast<float>(outHeight)) - 1.0;
 
 //             // Pinhole camera direction
-//             double px = 1.0;
-//             double py = planeWidth * (ndcW);
-//             double pz = planeHeight * (-ndcH);
+//             float px = 1.0;
+//             float py = planeWidth * (ndcW);
+//             float pz = planeHeight * (-ndcH);
 
-//             double normP = sqrt(px*px + py*py + pz*pz);
+//             float normP = sqrt(px*px + py*py + pz*pz);
 //             px /= normP;
 //             py /= normP;
 //             pz /= normP;
 
 //             // Direction of incoming ray is -p
-//             double n_l     = -px;
-//             double n_phi   = -py;
-//             double n_theta = pz;
+//             float n_l     = -px;
+//             float n_phi   = -py;
+//             float n_theta = pz;
 
 //             // Initial state
 //             RayState ray;
@@ -270,14 +275,14 @@ void renderEquatorial(RGBA *framebuffer,
 //             ray.theta = theta_c;
 //             ray.phi   = phi_c;
 
-//             double r_c = r_of_l(ray.l, wp);
+//             float r_c = r_of_l(ray.l, wp);
 
 //             ray.p_l     = n_l;
 //             ray.p_theta = r_c * n_theta;
 //             ray.b       = r_c * sin(ray.theta) * n_phi;
 
 //             // numerical integration
-//             double t = 0.0;
+//             float t = 0.0;
 //             while (t > tMin) {
 //                 rk4Step(ray, wp, dt);
 //                 if (abs(ray.l) > lMax) {

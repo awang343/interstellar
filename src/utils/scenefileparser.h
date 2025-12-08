@@ -12,25 +12,26 @@ struct ImageData {
     std::vector<RGBA> pixels;  // size = width * height
 };
 
-struct sceneInfo {
+struct SceneInfo {
     QString upperTexturePath;
     QString lowerTexturePath;
+    QString primitiveTexturePath;
     QString outputPath;
 
-    double rho;
-    double a;
-    double M;
+    float rho;
+    float a;
+    float M;
 
     int outWidth;
     int outHeight;
 
-    double viewPlaneWidthAngle;  // in degrees
+    float viewPlaneWidthAngle;  // in degrees
 
-    double dt;
-    double cameraDistance;
-    double cameraTheta = M_PI/2.0f;
-    double cameraPhi = 0.0f;
+    float dt;
+    float cameraDistance;
+    float cameraTheta = M_PI/2.0f;
+    float cameraPhi = 0.0f;
 };
 
 
-bool loadSceneInfoFromJson(const QString &configPath, sceneInfo &scene);
+bool loadSceneInfoFromJson(const QString &configPath, SceneInfo &scene);

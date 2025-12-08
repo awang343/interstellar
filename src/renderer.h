@@ -8,12 +8,12 @@
 
 struct SphereData {
     glm::vec3 center;
-    double radius;
-    double l;
+    float radius;
+    float l;
 };
 
 // this function samples the celestial sphere texture gased on given theta and phi
-RGBA sampleCelestial(const ImageData &img, double theta, double phi);
+RGBA sampleCelestial(const ImageData &img, float theta, float phi);
 
 // this function traces the rays using the equatorial symmetry method
 // see https://www.youtube.com/watch?v=PVO8nvb1o2w for the explanation of this method
@@ -22,9 +22,9 @@ void renderEquatorial(RGBA *framebuffer,
                       int outHeight,
                       const ImageData &sphereUpper,
                       const ImageData &sphereLower,
-                      double fovW,
+                      float fovW,
                       WormholeParams wp,
-                      double dt,
-                      double cameraDistance,
+                      float dt,
+                      float cameraDistance,
                       SphereData sphereData);
 
