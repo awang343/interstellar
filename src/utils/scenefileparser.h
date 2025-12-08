@@ -17,19 +17,19 @@ struct sceneInfo {
     QString lowerTexturePath;
     QString outputPath;
 
-    double rho;
-    double a;
-    double M;
+    float rho;
+    float a;
+    float M;
 
     int outWidth;
     int outHeight;
 
-    double viewPlaneWidthAngle;  // in degrees
+    float viewPlaneWidthAngle;  // in degrees
 
-    double dt;
-    double cameraDistance;
-    double cameraTheta = M_PI/2.0f;
-    double cameraPhi = 0.0f;
+    float dt;
+    float cameraDistance;
+    float cameraTheta = M_PI/2.0f;
+    float cameraPhi = 0.0f;
 };
 
 

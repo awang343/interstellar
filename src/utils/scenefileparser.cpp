@@ -37,13 +37,13 @@ bool loadSceneInfoFromJson(const QString &path, sceneInfo &outScene)
         return true;
     };
 
-    auto getDouble = [&](const QString &key, double &dst) {
+    auto getFloat = [&](const QString &key, float &dst) {
         if (!obj.contains(key) || !obj[key].isDouble()) {
-            std::cerr << "Missing or invalid double field: "
+            std::cerr << "Missing or invalid float field: "
                       << key.toStdString() << "\n";
             return false;
         }
-        dst = obj[key].toDouble();
+        dst = static_cast<float>(obj[key].toDouble());
         return true;
     };
 
@@ -63,22 +63,22 @@ bool loadSceneInfoFromJson(const QString &path, sceneInfo &outScene)
     if (!getString("outputImage",   outScene.outputPath))       return false;
 
     // Wormhole parameters
-    if (!getDouble("rho", outScene.rho)) return false;
-    if (!getDouble("a",   outScene.a))   return false;
-    if (!getDouble("M",   outScene.M))   return false;
+    if (!getFloat("rho", outScene.rho)) return false;
+    if (!getFloat("a",   outScene.a))   return false;
+    if (!getFloat("M",   outScene.M))   return false;
 
     // Resolution
     if (!getInt("outWidth",  outScene.outWidth))  return false;
     if (!getInt("outHeight", outScene.outHeight)) return false;
 
     // FOV (in degrees), convert to radians
-    double fovDeg;
-    if (!getDouble("viewPlaneWidthAngle", fovDeg)) return false;
+    float fovDeg;
+    if (!getFloat("viewPlaneWidthAngle", fovDeg)) return false;
     outScene.viewPlaneWidthAngle = fovDeg * M_PI / 180.0;
 
     // NEW fields
-    if (!getDouble("dt", outScene.dt)) return false;
-    if (!getDouble("cameraDistance", outScene.cameraDistance)) return false;
+    if (!getFloat("dt", outScene.dt)) return false;
+    if (!getFloat("cameraDistance", outScene.cameraDistance)) return false;
 
     return true;
 }
