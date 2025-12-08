@@ -99,32 +99,44 @@ int main(int argc, char *argv[]) {
     // make point light
     SceneLightData light{LightType::LIGHT_POINT, glm::vec4(1.0), glm::vec3(0.8, 0.05, 0.0), glm::vec4(10.0, 2.0, 10.0, -1.0), glm::vec3(-1.0, 0.0, -1.0), 1.0, 1.0};
 
-    // 4. Render using FOV from config (scene.viewPlaneWidthAngle is in radians)
-    render(framebuffer,
-           scene.outWidth,
-           scene.outHeight,
-           sphereUpper,
-           sphereLower,
-           primitiveTexture,
-           scene.viewPlaneWidthAngle, // in radians
-           wp,
-           scene.dt,
-           scene.cameraDistance,
-           sphereData,
-           std::vector<SceneLightData>{light});
-
-    // 5. Save output
-    bool ok = outputImage.save(scene.outputPath);
-    if (!ok) ok = outputImage.save(scene.outputPath, "PNG");
-
-    if (!ok) {
-        std::cerr << "Failed to save output image: "
-                  << scene.outputPath.toStdString() << "\n";
-        return 1;
+    if (!scene.usePaths) {
+        bool ok = renderSingleImage(
+            outputImage,
+            scene.outputPath,
+            framebuffer,
+            scene.outWidth,
+            scene.outHeight,
+            sphereUpper,
+            sphereLower,
+            primitiveTexture,
+            scene.viewPlaneWidthAngle, // in radians
+            wp,
+            scene.dt,
+            scene.cameraDistance,
+            sphereData,
+            std::vector<SceneLightData>{light});
+        if (!ok) {
+            return 1;
+        }
+    } else {
+        bool ok = renderPath(
+            outputImage,
+            scene.outputPath,
+            framebuffer,
+            scene.outWidth,
+            scene.outHeight,
+            sphereUpper,
+            sphereLower,
+            primitiveTexture,
+            scene.viewPlaneWidthAngle, // in radians
+            wp,
+            scene.dt,
+            scene.cameraDistance,
+            sphereData,
+            std::vector<SceneLightData>{light},
+            scene.paths,
+            scene.numPhotos);
     }
 
-    std::cout << "Saved rendered image to "
-              << scene.outputPath.toStdString() << "\n";
-    return 0;
 }
 

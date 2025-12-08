@@ -1,5 +1,7 @@
 #include "scenefileparser.h"
 #include <iostream>
+#include <QFileInfo>
+#include <QDir>
 #include <qjsonarray.h>
 
 bool loadSceneInfoFromJson(const QString &path, SceneInfo &outScene)
@@ -59,6 +61,14 @@ bool loadSceneInfoFromJson(const QString &path, SceneInfo &outScene)
             return false;
         }
         dst = obj[key].toInt();
+        return true;
+    };
+
+    auto getStringOptional = [&](const QString &key, QString &dst) {
+        if (!obj.contains(key) || !obj[key].isString()) {
+            obj[key] = "";
+        }
+        dst = obj[key].toString();
         return true;
     };
 
@@ -176,9 +186,22 @@ bool loadSceneInfoFromJson(const QString &path, SceneInfo &outScene)
     //   Camera paths (optional)
     // ----------------------
 
-    getBoolOptional("useCameraPath", outScene.usePaths);
-    getPathsOptional("pathPoints", outScene.paths);
-    getIntOptional("numPhotos", outScene.numPhotos);
+    if (getBoolOptional("useCameraPath", outScene.usePaths) && outScene.usePaths){
+        std::cout << "Using camera paths" << std::endl;
+        getPathsOptional("pathPoints", outScene.paths);
+
+        QFileInfo fi(outScene.outputPath);
+        QDir outDir = fi.dir();
+        if (!outDir.exists()) {
+            outDir.mkpath(".");
+        }
+
+        getIntOptional("numPhotos", outScene.numPhotos);
+        getStringOptional("outputFolder", outScene.outputPath);
+    } else {
+        std::cout << "Not using camera paths" << std::endl;
+    }
+
 
     return true;
 }

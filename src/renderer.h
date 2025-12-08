@@ -37,3 +37,32 @@ void render(RGBA *framebuffer,
             SphereData sphereData,
             std::vector<SceneLightData> lights);
 
+void render(RGBA *framebuffer,
+            int outWidth,
+            int outHeight,
+            const ImageData &sphereUpper,
+            const ImageData &sphereLower,
+            const ImageData &primitiveTexture,
+            float fovW,
+            WormholeParams wp,
+            float dt,
+            float cameraDistance,
+            float cameraTheta,
+            float cameraPhi,
+            SphereData sphereData,
+            std::vector<SceneLightData> lights);
+
+
+bool renderSingleImage(
+    QImage outputImage, QString outputPath,
+    RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sphereUpper,
+    const ImageData &sphereLower, const ImageData &primitiveTexture, float fovW,
+    WormholeParams wp, float dt, float cameraDistance, SphereData sphereData, std::vector<SceneLightData> lights);
+
+
+bool renderPath(
+    QImage outputImage, QString outputPath,
+    RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sphereUpper,
+    const ImageData &sphereLower, const ImageData &primitiveTexture, float fovW,
+    WormholeParams wp, float dt, float cameraDistance, SphereData sphereData, std::vector<SceneLightData> lights,
+    std::vector<glm::vec4> &keyFrames, int numPhotos);

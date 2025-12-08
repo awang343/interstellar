@@ -1,9 +1,12 @@
 #include "renderer.h"
+#include "camerapath.h"
 #include "lighting.h"
 
 #include <algorithm>
 #include <cmath>
 #include <glm/gtc/matrix_transform.hpp>
+#include <iostream>
+#include <qimage.h>
 #include <vector>
 
 // this function samples the celestial sphere texture gased on given theta and phi
@@ -40,13 +43,14 @@ RGBA sampleCelestial(const ImageData &img, float theta, float phi)
 // see https://www.youtube.com/watch?v=PVO8nvb1o2w for the explanation of this method
 void render(RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sphereUpper,
             const ImageData &sphereLower, const ImageData &primitiveTexture, float fovW,
-            WormholeParams wp, float dt, float cameraDistance, SphereData sphereData, std::vector<SceneLightData> lights)
+            WormholeParams wp, float dt, float cameraDistance, float cameraTheta, float cameraPhi,
+            SphereData sphereData, std::vector<SceneLightData> lights)
 {
 
     // Camera setup
     const float l_c = cameraDistance;
-    const float theta_c = M_PI / 2.0; // equatorial
-    const float phi_c = 0;            // will eventually make changes to this
+    const float theta_c = cameraTheta; // equatorial
+    const float phi_c = cameraPhi;            // will eventually make changes to this
 
     // Aspect ratio and vertical FOV
     float aspect = static_cast<float>(outHeight) / static_cast<float>(outWidth);
@@ -245,6 +249,24 @@ void render(RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sph
     }
 }
 
+void render(RGBA *framebuffer,
+            int outWidth,
+            int outHeight,
+            const ImageData &sphereUpper,
+            const ImageData &sphereLower,
+            const ImageData &primitiveTexture,
+            float fovW,
+            WormholeParams wp,
+            float dt,
+            float cameraDistance,
+            SphereData sphereData,
+            std::vector<SceneLightData> lights) {
+    // defaults if not specified
+    float cameraTheta = M_PI / 2.0f;
+    float cameraPhi = 0.f;
+    render(framebuffer, outWidth, outHeight, sphereUpper, sphereLower, primitiveTexture, fovW, wp, dt, cameraDistance, cameraTheta, cameraPhi, sphereData, lights);
+}
+
 // // this function traces the rays
 // void render(
 //     RGBA *framebuffer,
@@ -339,3 +361,67 @@ void render(RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sph
 //         }
 //     }
 // }
+
+bool renderSingleImage(
+    QImage outputImage, QString outputPath,
+    RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sphereUpper,
+    const ImageData &sphereLower, const ImageData &primitiveTexture, float fovW,
+    WormholeParams wp, float dt, float cameraDistance, SphereData sphereData, std::vector<SceneLightData> lights) {
+
+    render(framebuffer,
+           outWidth,
+           outHeight,
+           sphereUpper,
+           sphereLower,
+           primitiveTexture,
+           fovW, // in radians
+           wp,
+           dt,
+           cameraDistance,
+           sphereData,
+           lights);
+
+    // 5. Save output
+    bool ok = outputImage.save(outputPath);
+    if (!ok) ok = outputImage.save(outputPath, "PNG");
+
+    if (!ok) {
+        std::cerr << "Failed to save output image: "
+                  << outputPath.toStdString() << "\n";
+        return 1;
+    }
+
+    std::cout << "Saved rendered image to "
+              << outputPath.toStdString() << "\n";
+    return 0;
+}
+
+bool renderPath(
+    QImage outputImage, QString outputPath,
+    RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sphereUpper,
+    const ImageData &sphereLower, const ImageData &primitiveTexture, float fovW,
+    WormholeParams wp, float dt, float cameraDistance, SphereData sphereData, std::vector<SceneLightData> lights,
+    std::vector<glm::vec4> &keyframes, int numPhotos) {
+
+    cameraPath paths;
+    paths.buildFromKeyframes(keyframes, numPhotos, pathtype::PATHTYPE_LINEAR);
+    int photoNum = 0;
+    for (auto cameraPoint : paths.getPoints()) {
+        QString output = outputPath + "/" + QString::number(photoNum) + ".png";
+        photoNum += 1;
+        float cameraTheta = cameraPoint.theta;
+        float cameraDistance = cameraPoint.r;
+        float cameraPhi = cameraPoint.phi;
+        render(framebuffer, outWidth, outHeight, sphereUpper, sphereLower, primitiveTexture, fovW, wp, dt, cameraDistance, cameraTheta, cameraPhi, sphereData, lights);
+
+        bool ok = outputImage.save(output);
+        if (!ok) ok = outputImage.save(output, "PNG");
+
+        if (!ok) {
+            std::cerr << "Failed to save output image: "
+                      << output.toStdString() << "\n";
+            return 1;
+        }
+    }
+    return 0;
+}
