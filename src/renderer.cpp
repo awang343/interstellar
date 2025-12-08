@@ -170,8 +170,8 @@ void renderEquatorial(RGBA *framebuffer,
             float thetaFinal = acos(rotatedEuclidean[2] / length(rotatedEuclidean));
             float phiFinal = atan2(rotatedEuclidean[1], rotatedEuclidean[0]);
 
-            // break into cases where l<0 and l>0
-            RGBA color = {255, 0, 0, 255};
+            // sample the color
+            RGBA color = {0, 0, 0, 255};
 
             // if it intersects the sphere, display the color on the sphere
             bool intersectsSphere = false;
@@ -190,6 +190,8 @@ void renderEquatorial(RGBA *framebuffer,
                         // sample the texture color
                         glm::vec4 posIntersection(normalize(posEuclidean - sphereData.center) * sphereData.radius  + sphereData.center, 1.0);
                         glm::vec3 dirToCamera = normalize(glm::vec3(rayPositions[k-1 + rayInd * numRayPositions] - pos));
+
+
                     }
 
                 }

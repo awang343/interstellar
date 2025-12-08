@@ -12,9 +12,10 @@ struct ImageData {
     std::vector<RGBA> pixels;  // size = width * height
 };
 
-struct sceneInfo {
+struct SceneInfo {
     QString upperTexturePath;
     QString lowerTexturePath;
+    QString primitiveTexturePath;
     QString outputPath;
 
     float rho;
@@ -33,4 +34,4 @@ struct sceneInfo {
 };
 
 
-bool loadSceneInfoFromJson(const QString &configPath, sceneInfo &scene);
+bool loadSceneInfoFromJson(const QString &configPath, SceneInfo &scene);

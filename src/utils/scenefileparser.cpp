@@ -1,7 +1,7 @@
 #include "scenefileparser.h"
 #include <iostream>
 
-bool loadSceneInfoFromJson(const QString &path, sceneInfo &outScene)
+bool loadSceneInfoFromJson(const QString &path, SceneInfo &outScene)
 {
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
@@ -26,6 +26,10 @@ bool loadSceneInfoFromJson(const QString &path, sceneInfo &outScene)
     }
 
     QJsonObject obj = doc.object();
+
+    // ----------------------
+    //   Helper lambdas
+    // ----------------------
 
     auto getString = [&](const QString &key, QString &dst) {
         if (!obj.contains(key) || !obj[key].isString()) {
@@ -57,26 +61,42 @@ bool loadSceneInfoFromJson(const QString &path, sceneInfo &outScene)
         return true;
     };
 
-    // Read paths
-    if (!getString("upperTexture",  outScene.upperTexturePath)) return false;
-    if (!getString("lowerTexture",  outScene.lowerTexturePath)) return false;
-    if (!getString("outputImage",   outScene.outputPath))       return false;
+    // ----------------------
+    //   Texture paths
+    // ----------------------
 
-    // Wormhole parameters
+    if (!getString("upperTexture",     outScene.upperTexturePath))     return false;
+    if (!getString("lowerTexture",     outScene.lowerTexturePath))     return false;
+    if (!getString("primitiveTexture", outScene.primitiveTexturePath)) return false;  // NEW
+    if (!getString("outputImage",      outScene.outputPath))           return false;
+
+    // ----------------------
+    //   Wormhole parameters
+    // ----------------------
+
     if (!getFloat("rho", outScene.rho)) return false;
     if (!getFloat("a",   outScene.a))   return false;
     if (!getFloat("M",   outScene.M))   return false;
 
-    // Resolution
+    // ----------------------
+    //   Output resolution
+    // ----------------------
+
     if (!getInt("outWidth",  outScene.outWidth))  return false;
     if (!getInt("outHeight", outScene.outHeight)) return false;
 
-    // FOV (in degrees), convert to radians
+    // ----------------------
+    //   FOV (degrees → radians)
+    // ----------------------
+
     float fovDeg;
     if (!getFloat("viewPlaneWidthAngle", fovDeg)) return false;
-    outScene.viewPlaneWidthAngle = fovDeg * M_PI / 180.0;
+    outScene.viewPlaneWidthAngle = fovDeg * M_PI / 180.0f;
 
-    // NEW fields
+    // ----------------------
+    //   New fields
+    // ----------------------
+
     if (!getFloat("dt", outScene.dt)) return false;
     if (!getFloat("cameraDistance", outScene.cameraDistance)) return false;
 

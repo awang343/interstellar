@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
     const QString configPath = args[0];
 
     // 1. Load scene configuration from JSON
-    sceneInfo scene;
+    SceneInfo scene;
     if (!loadSceneInfoFromJson(configPath, scene)) {
         return 1; // errors already printed by loader
     }
