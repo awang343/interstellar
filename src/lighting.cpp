@@ -40,7 +40,8 @@ glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bu
     glm::vec3 obj_D = glm::vec3(1.f, 1.f, 1.f) * kd;       // HARDCODED
     // const glm::vec3 obj_S = glm::vec3(1.f, 1.f, 1.f) * ks; // HARDCODED
 
-    const glm::vec4 obj_point = glm::normalize(hit.point - glm::vec4(hit.sphere.center, 0.f)); // point in object space
+    const glm::vec3 obj_point = glm::normalize(glm::vec3(hit.point) - hit.sphere.center); // point in object space
+    const float obj_side = hit.point[3];
     // const glm::mat3 transform = glm::inverse(glm::transpose(glm::mat3(hit.shape->ctm)));
 
     const uv uv_map = get_uv(obj_point);
@@ -54,21 +55,24 @@ glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bu
     // const glm::vec3 V = glm::normalize(world_camera - glm::vec3(intersect));
 
     // Blend obj_D with textures
-    const bool enableTextureMap = true;                    // HARDCODED
+    const bool enableTextureMap = false;                    // HARDCODED
     const FilterType textureFilter = FilterType::Nearest; // HARDCODED
 
     if (enableTextureMap && texture.width > 0)
     {
+        std::cout << "OPEN" << std::endl;
         const float blend = 1.0; // HARDCODED
         const glm::vec3 texture_color = get_texture(texture, textureFilter, uv_map);
         obj_D = obj_D * (1.f - blend) + texture_color * blend;
+        std::cout << "CLOSE" << std::endl;
     }
 
     glm::vec3 pixel_color(obj_A);
 
     for (const SceneLightData &light : lights)
     {
-        if (light.pos[3] != obj_point[3])
+        // std::cout << light.pos[3] << " " << obj_side << std::endl;
+        if (light.pos[3] != obj_side)
         {
             continue;
         }

@@ -218,7 +218,7 @@ void render(RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sph
                         Hit hit = {posIntersection, dirToCamera, sphereData};
                         glm::vec3 color_vec =
                             shadePixel(hit, primitiveTexture, BumpMap{nullptr, 0, 0},
-                                       std::vector<SceneLightData>{}) *
+                                       lights) *
                             255.f;
                         color = RGBA{static_cast<std::uint8_t>(std::min(255.f, color_vec.x)),
                                      static_cast<std::uint8_t>(std::min(255.f, color_vec.y)),
