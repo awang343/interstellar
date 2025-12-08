@@ -220,10 +220,9 @@ void render(RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sph
                             shadePixel(hit, primitiveTexture, BumpMap{nullptr, 0, 0},
                                        std::vector<SceneLightData>{}) *
                             255.f;
-                        RGBA finalColor = {static_cast<std::uint8_t>(std::min(255.f, color_vec.x)),
-                                           static_cast<std::uint8_t>(std::min(255.f, color_vec.y)),
-                                           static_cast<std::uint8_t>(std::min(255.f, color_vec.z)),
-                                           255};
+                        color = RGBA{static_cast<std::uint8_t>(std::min(255.f, color_vec.x)),
+                                     static_cast<std::uint8_t>(std::min(255.f, color_vec.y)),
+                                     static_cast<std::uint8_t>(std::min(255.f, color_vec.z)), 255};
                     }
                 }
             }
