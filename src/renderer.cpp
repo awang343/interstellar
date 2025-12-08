@@ -5,6 +5,7 @@
 #include <cmath>
 #include <glm/gtc/matrix_transform.hpp>
 #include <vector>
+#include <iostream>
 
 // this function samples the celestial sphere texture gased on given theta and phi
 RGBA sampleCelestial(const ImageData &img, float theta, float phi)

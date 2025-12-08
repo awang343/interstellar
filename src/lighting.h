@@ -12,7 +12,6 @@ enum class LightType
 
 struct SceneLightData
 {
-    int id;
     LightType type;
 
     glm::vec4 color;
