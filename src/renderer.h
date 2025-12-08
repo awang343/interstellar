@@ -12,6 +12,13 @@ struct SphereData {
     float l;
 };
 
+struct Hit
+{
+    glm::vec4 point;
+    glm::vec3 to_camera;
+    SphereData &sphere;
+};
+
 // this function samples the celestial sphere texture gased on given theta and phi
 RGBA sampleCelestial(const ImageData &img, float theta, float phi);
 
@@ -27,5 +34,6 @@ void render(RGBA *framebuffer,
             WormholeParams wp,
             float dt,
             float cameraDistance,
-            SphereData sphereData);
+            SphereData sphereData,
+            std::vector<SceneLightData> lights);
 

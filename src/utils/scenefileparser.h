@@ -4,12 +4,20 @@
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <glm/glm.hpp>
 
 // a struct containing info of an image
 struct ImageData {
     int width  = 0;
     int height = 0;
     std::vector<RGBA> pixels;  // size = width * height
+};
+
+struct BumpMap
+{
+    glm::vec2 *gradients;
+    int width;
+    int height;
 };
 
 struct SceneInfo {
@@ -31,6 +39,28 @@ struct SceneInfo {
     float cameraDistance;
     float cameraTheta = M_PI/2.0f;
     float cameraPhi = 0.0f;
+};
+
+// Enum of the types of virtual lights that might be in the scene
+enum class LightType
+{
+    LIGHT_POINT,
+    LIGHT_DIRECTIONAL,
+    LIGHT_SPOT,
+};
+
+struct SceneLightData
+{
+    LightType type;
+
+    glm::vec4 color;
+    glm::vec3 function; // Attenuation function
+
+    glm::vec4 pos;
+    glm::vec3 dir;
+
+    float penumbra;
+    float angle;
 };
 
 
