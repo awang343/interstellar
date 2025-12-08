@@ -74,9 +74,11 @@ int main(int argc, char *argv[]) {
     // 2. Load input textures
     ImageData sphereUpper;
     ImageData sphereLower;
+    ImageData primitiveTexture;
 
     if (!loadImageToStruct(scene.upperTexturePath, sphereUpper)) return 1;
     if (!loadImageToStruct(scene.lowerTexturePath, sphereLower)) return 1;
+    if (!loadImageToStruct(scene.primitiveTexturePath, primitiveTexture)) return 1;
 
     // 3. Allocate output QImage using configured resolution
     QImage outputImage(scene.outWidth, scene.outHeight, QImage::Format_RGBA8888);
@@ -94,11 +96,12 @@ int main(int argc, char *argv[]) {
     SphereData sphereData{spherePos, 0.5, length(spherePos)};
 
     // 4. Render using FOV from config (scene.viewPlaneWidthAngle is in radians)
-    renderEquatorial(framebuffer,
+    render(framebuffer,
            scene.outWidth,
            scene.outHeight,
            sphereUpper,
            sphereLower,
+           primitiveTexture,
            scene.viewPlaneWidthAngle, // in radians
            wp,
            scene.dt,

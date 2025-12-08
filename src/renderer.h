@@ -17,14 +17,15 @@ RGBA sampleCelestial(const ImageData &img, float theta, float phi);
 
 // this function traces the rays using the equatorial symmetry method
 // see https://www.youtube.com/watch?v=PVO8nvb1o2w for the explanation of this method
-void renderEquatorial(RGBA *framebuffer,
-                      int outWidth,
-                      int outHeight,
-                      const ImageData &sphereUpper,
-                      const ImageData &sphereLower,
-                      float fovW,
-                      WormholeParams wp,
-                      float dt,
-                      float cameraDistance,
-                      SphereData sphereData);
+void render(RGBA *framebuffer,
+            int outWidth,
+            int outHeight,
+            const ImageData &sphereUpper,
+            const ImageData &sphereLower,
+            const ImageData &primitiveTexture,
+            float fovW,
+            WormholeParams wp,
+            float dt,
+            float cameraDistance,
+            SphereData sphereData);
 
