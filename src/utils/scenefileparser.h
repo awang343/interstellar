@@ -37,6 +37,10 @@ struct SceneInfo {
 
     float dt;
     float cameraDistance;
+
+    bool usePaths;
+    std::vector<glm::vec4> paths;
+    int numPhotos;
     float cameraTheta = M_PI/2.0f;
     float cameraPhi = 0.0f;
 };
