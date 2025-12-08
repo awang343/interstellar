@@ -10,7 +10,7 @@ uv get_uv(const Hit &hit)
     return uv{u, v};
 }
 
-static std::pair<glm::vec3, glm::vec3> get_dpduv(const Hit &hit, const uv &uv_coords)
+static std::pair<glm::vec3, glm::vec3> get_dpduv(const uv &uv_coords)
 {
     const float r = 0.5f;
 
@@ -60,6 +60,7 @@ static glm::vec2 bilinear_bump(const BumpMap &bmp, const uv &uv_map, const float
     const glm::vec2 I_top = (1.f - alpha_x) * tl + alpha_x * tr;
     const glm::vec2 I_bottom = (1.f - alpha_x) * bl + alpha_x * br;
 
+    glm::vec3 normal;
     return ((1.f - alpha_y) * I_top + alpha_y * I_bottom);
 }
 
@@ -95,7 +96,7 @@ static glm::vec3 bilinear_texture(const ImageData &image, const uv &uv_map, cons
     return ((1.f - alpha_y) * I_top + alpha_y * I_bottom);
 }
 
-glm::vec3 get_texture(const ImageData &texture, const Hit &hit, const FilterType filter_type, const uv &uv_map)
+glm::vec3 get_texture(const ImageData &texture, const FilterType filter_type, const uv &uv_map)
 {
     const float m = 1; // HARDCODED
     const float n = 1; // HARDCODED
@@ -127,15 +128,15 @@ glm::vec3 get_texture(const ImageData &texture, const Hit &hit, const FilterType
     }
 }
 
-glm::vec3 get_bump_normal(const BumpMap &bump_map, const Hit &hit, const FilterType filter_type, const uv &uv_map,
-                          float bump_scale)
+glm::vec3 get_bump_normal(const BumpMap &bump_map, const FilterType filter_type, const uv &uv_map,
+                          float bump_scale, glm::vec3 normal)
 {
     const float w = bump_map.width;
     const float h = bump_map.height;
     const float m = 1; // HARDCODED
     const float n = 1; // HARDCODED
 
-    const auto [dpdu, dpdv] = get_dpduv(hit, uv_map);
+    const auto [dpdu, dpdv] = get_dpduv(uv_map);
     glm::vec2 g;
 
     switch (filter_type)
@@ -166,9 +167,9 @@ glm::vec3 get_bump_normal(const BumpMap &bump_map, const Hit &hit, const FilterT
     const float dHdu = g.x * m * w;
     const float dHdv = g.y * n * h;
 
-    glm::vec3 dNdu = bump_scale * dHdu * glm::cross(hit.normal, dpdv);
-    glm::vec3 dNdv = bump_scale * dHdv * glm::cross(dpdu, hit.normal);
+    glm::vec3 dNdu = bump_scale * dHdu * glm::cross(normal, dpdv);
+    glm::vec3 dNdv = bump_scale * dHdv * glm::cross(dpdu, normal);
 
-    glm::vec3 perturbed_normal = hit.normal + dNdu + dNdv;
+    glm::vec3 perturbed_normal = normal + dNdu + dNdv;
     return glm::normalize(perturbed_normal);
 }

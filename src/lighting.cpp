@@ -39,16 +39,16 @@ glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bu
     glm::vec3 obj_D = glm::vec3(1.f, 1.f, 1.f) * kd;       // HARDCODED
     // const glm::vec3 obj_S = glm::vec3(1.f, 1.f, 1.f) * ks; // HARDCODED
 
-    const glm::vec4 obj_point = hit.point - glm::vec4(hit.sphere->center, 0.f); // point in object space
+    const glm::vec4 obj_point = glm::normalize(hit.point - glm::vec4(hit.sphere.center, 0.f)); // point in object space
     // const glm::mat3 transform = glm::inverse(glm::transpose(glm::mat3(hit.shape->ctm)));
 
     const uv uv_map = get_uv(hit);
 
-    const bool enableBumpMap = true; // HARDCODED
+    const bool enableBumpMap = false; // HARDCODED
     const glm::vec3 obj_normal =
         enableBumpMap && bump_map.width > 0
-            ? get_bump_normal(bump_map, hit, FilterType::Bilinear, uv_map, 0.01)
-            : hit.normal;
+            ? get_bump_normal(bump_map, FilterType::Bilinear, uv_map, 0.01, obj_point)
+            : obj_point;
     const glm::vec3 N = glm::normalize(/*transform **/ obj_normal);
     // const glm::vec3 V = glm::normalize(world_camera - glm::vec3(intersect));
 
@@ -59,7 +59,7 @@ glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bu
     if (enableTextureMap && texture.width > 0)
     {
         const float blend = 1.0; // HARDCODED
-        const glm::vec3 texture_color = get_texture(texture, hit, textureFilter, uv_map);
+        const glm::vec3 texture_color = get_texture(texture, textureFilter, uv_map);
         obj_D = obj_D * (1.f - blend) + texture_color * blend;
     }
 

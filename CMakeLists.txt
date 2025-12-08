@@ -36,7 +36,7 @@ add_executable(${PROJECT_NAME}
   src/camerapath.h
   src/renderer.h src/renderer.cpp
   src/lighting.h src/lighting.cpp
-  src/texture.h src/texture.cpp
+  src/textures.h src/textures.cpp
 
 )
 
