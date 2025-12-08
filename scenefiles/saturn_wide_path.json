@@ -1,0 +1,28 @@
+{
+  "upperTexture": "texture/saturn.png",
+  "lowerTexture": "texture/stars.png",
+  "primitiveTexture": "texture/bricks.jpg",
+  "outputImage": "output/saturn_wide_path.png",
+
+  "rho": 1.0,
+  "a": 0.05,
+  "M": 0.2,
+
+  "outWidth": 400,
+  "outHeight": 300,
+
+  "viewPlaneWidthAngle": 60.0,
+
+  "dt": -0.01,
+  "cameraDistance": -6.3,
+  "useCameraPath": true,
+  "pathPoints": [
+    [-6, 1.57079632679, 0, 0],
+    [-6, 1.57079632679, 0.785398163397, 1],
+    [-6, 1.57079632679, 1.57079632679, 2],
+    [-6, 1.57079632679, 2.35619449019, 2],
+    [-6, 1.57079632679, 3.14159265359, 2]
+  ],
+  "numPhotos": 20,
+  "outputFolder": "output/saturn_wide_path"
+}
