@@ -14,25 +14,27 @@
 #include "utils/scenefileparser.h"
 #include "renderer.h"
 
-
 // this function loads the two celestial sphere textures into image data
 bool loadImageToStruct(const QString &path, ImageData &out)
 {
     QImage img(path);
-    if (img.isNull()) {
+    if (img.isNull())
+    {
         std::cerr << "Failed to load image: " << path.toStdString() << "\n";
         return false;
     }
 
     QImage converted = img.convertToFormat(QImage::Format_RGBA8888);
 
-    out.width  = converted.width();
+    out.width = converted.width();
     out.height = converted.height();
     out.pixels.resize(out.width * out.height);
 
-    for (int y = 0; y < out.height; ++y) {
+    for (int y = 0; y < out.height; ++y)
+    {
         const uchar *line = converted.constScanLine(y);
-        for (int x = 0; x < out.width; ++x) {
+        for (int x = 0; x < out.width; ++x)
+        {
             const uchar *src = line + 4 * x;
             RGBA &dst = out.pixels[y * out.width + x];
             dst.r = src[0];
@@ -45,7 +47,8 @@ bool loadImageToStruct(const QString &path, ImageData &out)
 }
 
 // the main function for the program
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     QCoreApplication app(argc, argv);
 
     QCommandLineParser parser;
@@ -59,7 +62,8 @@ int main(int argc, char *argv[]) {
     parser.process(app);
 
     const QStringList args = parser.positionalArguments();
-    if (args.size() != 1) {
+    if (args.size() != 1)
+    {
         std::cerr << "Usage: raytracer <config.json>\n";
         return 1;
     }
@@ -68,7 +72,8 @@ int main(int argc, char *argv[]) {
 
     // 1. Load scene configuration from JSON
     SceneInfo scene;
-    if (!loadSceneInfoFromJson(configPath, scene)) {
+    if (!loadSceneInfoFromJson(configPath, scene))
+    {
         return 1; // errors already printed by loader
     }
 
@@ -77,18 +82,22 @@ int main(int argc, char *argv[]) {
     ImageData sphereLower;
     ImageData primitiveTexture;
 
-    if (!loadImageToStruct(scene.upperTexturePath, sphereUpper)) return 1;
-    if (!loadImageToStruct(scene.lowerTexturePath, sphereLower)) return 1;
-    if (!loadImageToStruct(scene.primitiveTexturePath, primitiveTexture)) return 1;
+    if (!loadImageToStruct(scene.upperTexturePath, sphereUpper))
+        return 1;
+    if (!loadImageToStruct(scene.lowerTexturePath, sphereLower))
+        return 1;
+    if (!loadImageToStruct(scene.primitiveTexturePath, primitiveTexture))
+        return 1;
 
     // 3. Allocate output QImage using configured resolution
     QImage outputImage(scene.outWidth, scene.outHeight, QImage::Format_RGBA8888);
-    if (outputImage.isNull()) {
+    if (outputImage.isNull())
+    {
         std::cerr << "Failed to allocate output QImage\n";
         return 1;
     }
 
-    RGBA *framebuffer = reinterpret_cast<RGBA*>(outputImage.bits());
+    RGBA *framebuffer = reinterpret_cast<RGBA *>(outputImage.bits());
 
     WormholeParams wp{scene.rho, scene.a, scene.M};
 
@@ -96,10 +105,17 @@ int main(int argc, char *argv[]) {
     glm::vec3 spherePos(0.0, 2.0, 0.0);
     SphereData sphereData{spherePos, 0.5, -length(spherePos)};
 
+    // make a cube
+    glm::vec3 cubePos(-2.0, 1.0, 1.0);
+    glm::vec3 cubeHalfExtents(0.5, 0.5, 0.5);        // Size: 1x1x1 cube
+    float cubeRadius = glm::length(cubeHalfExtents); // Bounding sphere radius
+    CubeData cubeData{cubePos, cubeHalfExtents, -length(cubePos), cubeRadius};
+
     // make point light
     SceneLightData light{LightType::LIGHT_POINT, glm::vec4(1.0), glm::vec3(0.8, 0.05, 0.0), glm::vec4(10.0, 2.0, 10.0, -1.0), glm::vec3(-1.0, 0.0, -1.0), 1.0, 1.0};
 
-    if (!scene.usePaths) {
+    if (!scene.usePaths)
+    {
         bool ok = renderSingleImage(
             outputImage,
             scene.outputPath,
@@ -114,11 +130,15 @@ int main(int argc, char *argv[]) {
             scene.dt,
             scene.cameraDistance,
             sphereData,
+            cubeData,
             std::vector<SceneLightData>{light});
-        if (!ok) {
+        if (!ok)
+        {
             return 1;
         }
-    } else {
+    }
+    else
+    {
         bool ok = renderPath(
             outputImage,
             scene.outputPath,
@@ -133,10 +153,9 @@ int main(int argc, char *argv[]) {
             scene.dt,
             scene.cameraDistance,
             sphereData,
+            cubeData,
             std::vector<SceneLightData>{light},
             scene.paths,
             scene.numPhotos);
     }
-
 }
-

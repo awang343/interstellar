@@ -173,3 +173,28 @@ glm::vec3 get_bump_normal(const BumpMap &bump_map, const FilterType filter_type,
     glm::vec3 perturbed_normal = normal + dNdu + dNdv;
     return glm::normalize(perturbed_normal);
 }
+
+
+// Add this to textures.cpp
+uv get_cube_uv(const glm::vec3 &localPoint, const glm::vec3 &normal, const glm::vec3 &halfExtents)
+{
+    float u, v;
+
+    if (abs(normal.x) > 0.5f)
+    { // X faces (left/right)
+        u = (localPoint.z / halfExtents.z + 1.0f) * 0.5f;
+        v = (localPoint.y / halfExtents.y + 1.0f) * 0.5f;
+    }
+    else if (abs(normal.y) > 0.5f)
+    { // Y faces (top/bottom)
+        u = (localPoint.x / halfExtents.x + 1.0f) * 0.5f;
+        v = (localPoint.z / halfExtents.z + 1.0f) * 0.5f;
+    }
+    else
+    { // Z faces (front/back)
+        u = (localPoint.x / halfExtents.x + 1.0f) * 0.5f;
+        v = (localPoint.y / halfExtents.y + 1.0f) * 0.5f;
+    }
+
+    return uv{u, v};
+}

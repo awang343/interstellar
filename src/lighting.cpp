@@ -28,6 +28,7 @@ static inline float calc_falloff(const float &inner, const float &outer, const f
     return -2 * interm * interm * interm + 3 * interm * interm;
 }
 
+
 glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bump_map,
                      const std::vector<SceneLightData> &lights)
 {
@@ -37,25 +38,58 @@ glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bu
     const float shininess = 0.5f;
 
     const glm::vec3 obj_A = glm::vec3(0.f, 0.5f, 0.f) * ka; // HARDCODED
-    glm::vec3 obj_D = glm::vec3(1.f, 1.f, 1.f) * kd;       // HARDCODED
+    glm::vec3 obj_D = glm::vec3(1.f, 1.f, 1.f) * kd;        // HARDCODED
     // const glm::vec3 obj_S = glm::vec3(1.f, 1.f, 1.f) * ks; // HARDCODED
 
-    const glm::vec3 obj_point = glm::normalize(glm::vec3(hit.point) - hit.sphere.center); // point in object space
     const float obj_side = hit.point[3];
-    // const glm::mat3 transform = glm::inverse(glm::transpose(glm::mat3(hit.shape->ctm)));
-
-    const uv uv_map = get_uv(obj_point);
-
-    const bool enableBumpMap = false; // HARDCODED
-    const glm::vec3 obj_normal =
-        enableBumpMap && bump_map.width > 0
+    
+    // Compute obj_point, normal, and UV based on primitive type
+    glm::vec3 obj_point_world;
+    glm::vec3 obj_point;
+    glm::vec3 obj_normal;
+    uv uv_map;
+    
+    if (hit.type == PrimitiveType::SPHERE)
+    {
+        obj_point_world = glm::vec3(hit.point);
+        obj_point = glm::normalize(glm::vec3(hit.point) - hit.sphere.center);
+        uv_map = get_uv(obj_point);
+        
+        const bool enableBumpMap = false; // HARDCODED
+        obj_normal = enableBumpMap && bump_map.width > 0
             ? get_bump_normal(bump_map, FilterType::Bilinear, uv_map, 0.01, obj_point)
             : obj_point;
-    const glm::vec3 N = glm::normalize(/*transform **/ obj_normal);
-    // const glm::vec3 V = glm::normalize(world_camera - glm::vec3(intersect));
+    }
+    else if (hit.type == PrimitiveType::CUBE)
+    {
+        obj_point_world = glm::vec3(hit.point);
+        obj_point = glm::vec3(hit.point);
+        
+        // For cubes, we need to compute the normal and UV
+        // The normal was already computed during intersection, but we need to reconstruct it
+        glm::vec3 localPoint = obj_point - hit.cube.center;
+        
+        // Find which face (same logic as intersectCube)
+        float dx = hit.cube.halfExtents.x - abs(localPoint.x);
+        float dy = hit.cube.halfExtents.y - abs(localPoint.y);
+        float dz = hit.cube.halfExtents.z - abs(localPoint.z);
+        
+        if (dx < dy && dx < dz) {
+            obj_normal = glm::vec3(localPoint.x > 0 ? 1.0f : -1.0f, 0, 0);
+        } else if (dy < dz) {
+            obj_normal = glm::vec3(0, localPoint.y > 0 ? 1.0f : -1.0f, 0);
+        } else {
+            obj_normal = glm::vec3(0, 0, localPoint.z > 0 ? 1.0f : -1.0f);
+        }
+        
+        // Get UV coordinates for cube
+        uv_map = get_cube_uv(localPoint, obj_normal, hit.cube.halfExtents);
+    }
+    
+    const glm::vec3 N = glm::normalize(obj_normal);
 
     // Blend obj_D with textures
-    const bool enableTextureMap = false;                    // HARDCODED
+    const bool enableTextureMap = false;                  // HARDCODED
     const FilterType textureFilter = FilterType::Nearest; // HARDCODED
 
     if (enableTextureMap && texture.width > 0)
@@ -79,7 +113,7 @@ glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bu
 
         glm::vec3 phong(0.f);
 
-        const glm::vec3 to_light = calc_light_vec(obj_point, light);
+        const glm::vec3 to_light = calc_light_vec(obj_point_world, light);
         const glm::vec3 L_i = glm::normalize(to_light); // Vector from point to light
         const glm::vec3 R = glm::normalize(2.f * glm::dot(L_i, N) * N - L_i);
 
@@ -121,7 +155,8 @@ glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bu
         // Attenuation effect
         if (!directional && light_intensity > 1e-6f)
         {
-            const float dist = glm::distance(glm::vec3(obj_point), glm::vec3(light.pos));
+
+            const float dist = glm::distance(obj_point_world, glm::vec3(light.pos));
             const float mult = 1.f / glm::dot(light.function, glm::vec3(1.f, dist, dist * dist));
             light_intensity *= std::min(1.f, mult);
         }

@@ -1,6 +1,7 @@
 #include "renderer.h"
 #include "camerapath.h"
 #include "lighting.h"
+#include "textures.h"
 
 #include <algorithm>
 #include <cmath>
@@ -8,6 +9,7 @@
 #include <iostream>
 #include <qimage.h>
 #include <vector>
+
 
 // this function samples the celestial sphere texture gased on given theta and phi
 RGBA sampleCelestial(const ImageData &img, float theta, float phi)
@@ -52,38 +54,77 @@ RGBA sampleCelestial(const ImageData &img, float theta, float phi)
     RGBA c11 = img.pixels[y1 * img.width + x1]; // bottom-right
 
     // Bilinear interpolation
-    // horizontal interpolation 
+    // horizontal interpolation
     float r_top = c00.r * (1.0f - alpha_x) + c10.r * alpha_x;
     float g_top = c00.g * (1.0f - alpha_x) + c10.g * alpha_x;
     float b_top = c00.b * (1.0f - alpha_x) + c10.b * alpha_x;
     float a_top = c00.a * (1.0f - alpha_x) + c10.a * alpha_x;
-    
+
     float r_bottom = c01.r * (1.0f - alpha_x) + c11.r * alpha_x;
     float g_bottom = c01.g * (1.0f - alpha_x) + c11.g * alpha_x;
     float b_bottom = c01.b * (1.0f - alpha_x) + c11.b * alpha_x;
     float a_bottom = c01.a * (1.0f - alpha_x) + c11.a * alpha_x;
-    
+
     // vertical interpolation
     uint8_t r_final = static_cast<uint8_t>(r_top * (1.0f - alpha_y) + r_bottom * alpha_y);
     uint8_t g_final = static_cast<uint8_t>(g_top * (1.0f - alpha_y) + g_bottom * alpha_y);
     uint8_t b_final = static_cast<uint8_t>(b_top * (1.0f - alpha_y) + b_bottom * alpha_y);
     uint8_t a_final = static_cast<uint8_t>(a_top * (1.0f - alpha_y) + a_bottom * alpha_y);
-    
+
     return {r_final, g_final, b_final, a_final};
 }
+
+// Cube intersection test
+bool intersectCube(const glm::vec3 &point, const CubeData &cube,
+                   glm::vec3 &normal, glm::vec3 &localPoint)
+{
+    localPoint = point - cube.center;
+
+    // Check if inside cube (axis-aligned box test)
+    if (abs(localPoint.x) > cube.halfExtents.x ||
+        abs(localPoint.y) > cube.halfExtents.y ||
+        abs(localPoint.z) > cube.halfExtents.z)
+    {
+        return false;
+    }
+
+    // Find which face we hit (the one we're closest to)
+    float dx = cube.halfExtents.x - abs(localPoint.x);
+    float dy = cube.halfExtents.y - abs(localPoint.y);
+    float dz = cube.halfExtents.z - abs(localPoint.z);
+
+    if (dx < dy && dx < dz)
+    {
+        // Hit X face
+        normal = glm::vec3(localPoint.x > 0 ? 1.0f : -1.0f, 0, 0);
+    }
+    else if (dy < dz)
+    {
+        // Hit Y face
+        normal = glm::vec3(0, localPoint.y > 0 ? 1.0f : -1.0f, 0);
+    }
+    else
+    {
+        // Hit Z face
+        normal = glm::vec3(0, 0, localPoint.z > 0 ? 1.0f : -1.0f);
+    }
+
+    return true;
+}
+
 
 // this function traces the rays using the equatorial symmetry method
 // see https://www.youtube.com/watch?v=PVO8nvb1o2w for the explanation of this method
 void render(RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sphereUpper,
             const ImageData &sphereLower, const ImageData &primitiveTexture, float fovW,
             WormholeParams wp, float dt, float cameraDistance, float cameraTheta, float cameraPhi,
-            SphereData sphereData, std::vector<SceneLightData> lights)
+            SphereData sphereData, CubeData cubeData, std::vector<SceneLightData> lights)
 {
 
     // Camera setup
     const float l_c = cameraDistance;
     const float theta_c = cameraTheta; // equatorial
-    const float phi_c = cameraPhi;            // will eventually make changes to this
+    const float phi_c = cameraPhi;     // will eventually make changes to this
 
     // Aspect ratio and vertical FOV
     float aspect = static_cast<float>(outHeight) / static_cast<float>(outWidth);
@@ -175,6 +216,10 @@ void render(RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sph
     float lMinSphere = sphereData.l - sphereData.radius;
     float lMaxSphere = sphereData.l + sphereData.radius;
 
+    // the l interval that contains the cube
+    float lMinCube = cubeData.l - cubeData.radius;
+    float lMaxCube = cubeData.l + cubeData.radius;
+
     // sample the texture color based on the precomputed ray directions
     for (int j = 0; j < outHeight; ++j)
     {
@@ -215,22 +260,24 @@ void render(RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sph
             RGBA color = {0, 0, 0, 255};
 
             // if it intersects the sphere, display the color on the sphere
-            bool intersectsSphere = false;
+            bool intersectsObject = false;
 
             for (int k = 1; k < rayPositionCounts[rayInd]; k++)
             {
-                if (intersectsSphere)
+                if (intersectsObject)
                 {
                     break;
                 }
+
                 glm::vec4 pos = rayPositions[k + rayInd * numRayPositions];
+                glm::vec3 posEuclidean(pos);
+                posEuclidean = glm::vec3(rotationMatrix * glm::vec4(posEuclidean, 1.0));
+
                 if (pos[3] >= lMinSphere && pos[3] <= lMaxSphere)
                 {
-                    glm::vec3 posEuclidean(pos);
-                    posEuclidean = glm::vec3(rotationMatrix * glm::vec4(posEuclidean, 1.0));
                     if (length(posEuclidean - sphereData.center) - sphereData.radius < 0.0)
                     {
-                        intersectsSphere = true;
+                        intersectsObject = true;
 
                         // sample the texture color
                         glm::vec4 posIntersection;
@@ -262,10 +309,33 @@ void render(RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sph
                                      static_cast<std::uint8_t>(std::min(255.f, color_vec.z)), 255};
                     }
                 }
+
+                if (!intersectsObject && pos[3] >= lMinCube && pos[3] <= lMaxCube)
+                {
+                    glm::vec3 cubeNormal, localPoint;
+                    if (intersectCube(posEuclidean, cubeData, cubeNormal, localPoint))
+                    {
+                        intersectsObject = true;
+
+                        glm::vec3 dirToCamera = normalize(
+                            glm::vec3(rayPositions[k - 1 + rayInd * numRayPositions] - pos));
+
+                        glm::vec4 posIntersection = glm::vec4(posEuclidean, pos[3] > 0 ? 1.0 : -1.0);
+
+                        Hit hit(posIntersection, dirToCamera, cubeData);
+
+                        glm::vec3 color_vec = shadePixel(hit, primitiveTexture, BumpMap{nullptr, 0, 0}, lights) * 255.f;
+                        color = RGBA{
+                            static_cast<std::uint8_t>(std::min(255.f, color_vec.x)),
+                            static_cast<std::uint8_t>(std::min(255.f, color_vec.y)),
+                            static_cast<std::uint8_t>(std::min(255.f, color_vec.z)),
+                            255};
+                    }
+                }
             }
 
             // if not, display the skybox texture
-            if (!intersectsSphere && abs(equatorialRay.l) > lMax)
+            if (!intersectsObject && abs(equatorialRay.l) > lMax)
             {
                 if (equatorialRay.l > 0.0)
                 {
@@ -293,11 +363,13 @@ void render(RGBA *framebuffer,
             float dt,
             float cameraDistance,
             SphereData sphereData,
-            std::vector<SceneLightData> lights) {
+            CubeData cubeData,
+            std::vector<SceneLightData> lights)
+{
     // defaults if not specified
     float cameraTheta = M_PI / 2.0f;
     float cameraPhi = 0.f;
-    render(framebuffer, outWidth, outHeight, sphereUpper, sphereLower, primitiveTexture, fovW, wp, dt, cameraDistance, cameraTheta, cameraPhi, sphereData, lights);
+    render(framebuffer, outWidth, outHeight, sphereUpper, sphereLower, primitiveTexture, fovW, wp, dt, cameraDistance, cameraTheta, cameraPhi, sphereData, cubeData, lights);
 }
 
 // // this function traces the rays
@@ -399,7 +471,8 @@ bool renderSingleImage(
     QImage outputImage, QString outputPath,
     RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sphereUpper,
     const ImageData &sphereLower, const ImageData &primitiveTexture, float fovW,
-    WormholeParams wp, float dt, float cameraDistance, SphereData sphereData, std::vector<SceneLightData> lights) {
+    WormholeParams wp, float dt, float cameraDistance, SphereData sphereData, CubeData cubeData, std::vector<SceneLightData> lights)
+{
 
     render(framebuffer,
            outWidth,
@@ -412,13 +485,16 @@ bool renderSingleImage(
            dt,
            cameraDistance,
            sphereData,
+           cubeData,
            lights);
 
     // 5. Save output
     bool ok = outputImage.save(outputPath);
-    if (!ok) ok = outputImage.save(outputPath, "PNG");
+    if (!ok)
+        ok = outputImage.save(outputPath, "PNG");
 
-    if (!ok) {
+    if (!ok)
+    {
         std::cerr << "Failed to save output image: "
                   << outputPath.toStdString() << "\n";
         return 1;
@@ -433,24 +509,28 @@ bool renderPath(
     QImage outputImage, QString outputPath,
     RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sphereUpper,
     const ImageData &sphereLower, const ImageData &primitiveTexture, float fovW,
-    WormholeParams wp, float dt, float cameraDistance, SphereData sphereData, std::vector<SceneLightData> lights,
-    std::vector<glm::vec4> &keyframes, int numPhotos) {
+    WormholeParams wp, float dt, float cameraDistance, SphereData sphereData, CubeData cubeData, std::vector<SceneLightData> lights,
+    std::vector<glm::vec4> &keyframes, int numPhotos)
+{
 
     cameraPath paths;
     paths.buildFromKeyframes(keyframes, numPhotos, pathtype::PATHTYPE_LINEAR);
     int photoNum = 0;
-    for (auto cameraPoint : paths.getPoints()) {
+    for (auto cameraPoint : paths.getPoints())
+    {
         QString output = outputPath + "/" + QString::number(photoNum) + ".png";
         photoNum += 1;
         float cameraTheta = cameraPoint.theta;
         float cameraDistance = cameraPoint.r;
         float cameraPhi = cameraPoint.phi;
-        render(framebuffer, outWidth, outHeight, sphereUpper, sphereLower, primitiveTexture, fovW, wp, dt, cameraDistance, cameraTheta, cameraPhi, sphereData, lights);
+        render(framebuffer, outWidth, outHeight, sphereUpper, sphereLower, primitiveTexture, fovW, wp, dt, cameraDistance, cameraTheta, cameraPhi, sphereData, cubeData, lights);
 
         bool ok = outputImage.save(output);
-        if (!ok) ok = outputImage.save(output, "PNG");
+        if (!ok)
+            ok = outputImage.save(output, "PNG");
 
-        if (!ok) {
+        if (!ok)
+        {
             std::cerr << "Failed to save output image: "
                       << output.toStdString() << "\n";
             return 1;

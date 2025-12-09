@@ -19,3 +19,5 @@ uv get_uv(const glm::vec3 &obj_point);
 glm::vec3 get_texture(const ImageData &texture, const FilterType filter_type, const uv &uv_map);
 glm::vec3 get_bump_normal(const BumpMap &bump_map, const FilterType filter_type, const uv &uv_map,
                           float bump_scale, glm::vec3 normal);
+
+uv get_cube_uv(const glm::vec3 &localPoint, const glm::vec3 &normal, const glm::vec3 &halfExtents);
