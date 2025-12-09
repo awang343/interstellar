@@ -52,38 +52,73 @@ RGBA sampleCelestial(const ImageData &img, float theta, float phi)
     RGBA c11 = img.pixels[y1 * img.width + x1]; // bottom-right
 
     // Bilinear interpolation
-    // horizontal interpolation 
+    // horizontal interpolation
     float r_top = c00.r * (1.0f - alpha_x) + c10.r * alpha_x;
     float g_top = c00.g * (1.0f - alpha_x) + c10.g * alpha_x;
     float b_top = c00.b * (1.0f - alpha_x) + c10.b * alpha_x;
     float a_top = c00.a * (1.0f - alpha_x) + c10.a * alpha_x;
-    
+
     float r_bottom = c01.r * (1.0f - alpha_x) + c11.r * alpha_x;
     float g_bottom = c01.g * (1.0f - alpha_x) + c11.g * alpha_x;
     float b_bottom = c01.b * (1.0f - alpha_x) + c11.b * alpha_x;
     float a_bottom = c01.a * (1.0f - alpha_x) + c11.a * alpha_x;
-    
+
     // vertical interpolation
     uint8_t r_final = static_cast<uint8_t>(r_top * (1.0f - alpha_y) + r_bottom * alpha_y);
     uint8_t g_final = static_cast<uint8_t>(g_top * (1.0f - alpha_y) + g_bottom * alpha_y);
     uint8_t b_final = static_cast<uint8_t>(b_top * (1.0f - alpha_y) + b_bottom * alpha_y);
     uint8_t a_final = static_cast<uint8_t>(a_top * (1.0f - alpha_y) + a_bottom * alpha_y);
-    
+
     return {r_final, g_final, b_final, a_final};
+}
+
+bool intersectCube(const glm::vec3 &rayOrigin, const glm::vec3 &rayDir,
+                   const glm::vec3 &cubeCenter, float halfSide,
+                   float &tNear, float &tFar)
+{
+    glm::vec3 tMin = (cubeCenter - glm::vec3(halfSide) - rayOrigin) / rayDir;
+    glm::vec3 tMax = (cubeCenter + glm::vec3(halfSide) - rayOrigin) / rayDir;
+
+    glm::vec3 t1 = glm::min(tMin, tMax);
+    glm::vec3 t2 = glm::max(tMin, tMax);
+
+    tNear = glm::max(glm::max(t1.x, t1.y), t1.z);
+    tFar = glm::min(glm::min(t2.x, t2.y), t2.z);
+
+    return tFar >= tNear && tFar > 0;
+}
+
+glm::vec3 getCubeNormal(const glm::vec3 &point, const glm::vec3 &cubeCenter, float halfSide)
+{
+    glm::vec3 local = point - cubeCenter;
+    glm::vec3 absLocal = glm::abs(local);
+
+    if (absLocal.x > absLocal.y && absLocal.x > absLocal.z)
+    {
+        return glm::vec3(glm::sign(local.x), 0, 0);
+    }
+    else if (absLocal.y > absLocal.z)
+    {
+        return glm::vec3(0, glm::sign(local.y), 0);
+    }
+    else
+    {
+        return glm::vec3(0, 0, glm::sign(local.z));
+    }
 }
 
 // this function traces the rays using the equatorial symmetry method
 // see https://www.youtube.com/watch?v=PVO8nvb1o2w for the explanation of this method
 void render(RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sphereUpper,
-            const ImageData &sphereLower, const ImageData &primitiveTexture, float fovW,
+            const ImageData &sphereLower, const std::vector<Object> &objects, float fovW,
             WormholeParams wp, float dt, float cameraDistance, float cameraTheta, float cameraPhi,
-            SphereData sphereData, std::vector<SceneLightData> lights)
+            std::vector<SceneLightData> lights)
 {
 
     // Camera setup
     const float l_c = cameraDistance;
     const float theta_c = cameraTheta; // equatorial
-    const float phi_c = cameraPhi;            // will eventually make changes to this
+    const float phi_c = cameraPhi;     // will eventually make changes to this
 
     // Aspect ratio and vertical FOV
     float aspect = static_cast<float>(outHeight) / static_cast<float>(outWidth);
@@ -171,10 +206,6 @@ void render(RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sph
         rayPositionCounts[i] = counter;
     }
 
-    // the l interval that contains the sphere
-    float lMinSphere = sphereData.l - sphereData.radius;
-    float lMaxSphere = sphereData.l + sphereData.radius;
-
     // sample the texture color based on the precomputed ray directions
     for (int j = 0; j < outHeight; ++j)
     {
@@ -215,57 +246,112 @@ void render(RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sph
             RGBA color = {0, 0, 0, 255};
 
             // if it intersects the sphere, display the color on the sphere
-            bool intersectsSphere = false;
+            bool intersectsPrimitive = false;
+            float closestDistance = std::numeric_limits<float>::max();
+            RGBA finalColor = {0, 0, 0, 255};
 
-            for (int k = 1; k < rayPositionCounts[rayInd]; k++)
+            for (const Object &currentObject : objects)
             {
-                if (intersectsSphere)
-                {
-                    break;
-                }
-                glm::vec4 pos = rayPositions[k + rayInd * numRayPositions];
-                if (pos[3] >= lMinSphere && pos[3] <= lMaxSphere)
-                {
-                    glm::vec3 posEuclidean(pos);
-                    posEuclidean = glm::vec3(rotationMatrix * glm::vec4(posEuclidean, 1.0));
-                    if (length(posEuclidean - sphereData.center) - sphereData.radius < 0.0)
-                    {
-                        intersectsSphere = true;
+                glm::vec3 objectPos(currentObject.points[0][0], currentObject.points[0][1], currentObject.points[0][2]);
+                SphereData objectData;
+                float cubeHalfSide = 0.0f;
+                float lMinObject, lMaxObject;
 
-                        // sample the texture color
-                        glm::vec4 posIntersection;
-                        if (pos[3] > 0)
+                if (currentObject.type == PrimitiveType::Sphere)
+                {
+                    objectData = SphereData(objectPos, currentObject.points[0][3], -length(objectPos));
+                    lMinObject = objectData.l - objectData.radius;
+                    lMaxObject = objectData.l + objectData.radius;
+                }
+                else
+                {
+                    cubeHalfSide = currentObject.side * 0.5f;
+                    objectData = SphereData(objectPos, cubeHalfSide * 1.732f, -length(objectPos));
+                    lMinObject = objectData.l - cubeHalfSide * 1.732f;
+                    lMaxObject = objectData.l + cubeHalfSide * 1.732f;
+                }
+
+                for (int k = 1; k < rayPositionCounts[rayInd]; k++)
+                {
+                    glm::vec4 pos = rayPositions[k + rayInd * numRayPositions];
+                    if (pos[3] >= lMinObject && pos[3] <= lMaxObject)
+                    {
+                        glm::vec3 posEuclidean(pos);
+                        posEuclidean = glm::vec3(rotationMatrix * glm::vec4(posEuclidean, 1.0));
+
+                        bool hitObject = false;
+                        glm::vec3 normal;
+                        glm::vec3 hitPoint;
+                        float hitDistance;
+
+                        if (currentObject.type == PrimitiveType::Sphere)
                         {
-                            posIntersection = glm::vec4(
-                                normalize(posEuclidean - sphereData.center) * sphereData.radius +
-                                    sphereData.center,
-                                1.0);
+                            float dist = length(posEuclidean - objectData.center);
+                            if (dist - objectData.radius < 0.0)
+                            {
+                                hitObject = true;
+                                hitPoint = normalize(posEuclidean - objectData.center) * objectData.radius + objectData.center;
+                                normal = normalize(hitPoint - objectData.center);
+                                hitDistance = length(hitPoint - glm::vec3(rayPositions[k - 1 + rayInd * numRayPositions]));
+                            }
                         }
                         else
                         {
-                            posIntersection = glm::vec4(
-                                normalize(posEuclidean - sphereData.center) * sphereData.radius +
-                                    sphereData.center,
-                                -1.0);
+                            glm::vec3 prevPos = glm::vec3(rayPositions[k - 1 + rayInd * numRayPositions]);
+                            prevPos = glm::vec3(rotationMatrix * glm::vec4(prevPos, 1.0));
+                            glm::vec3 rayDirection = normalize(posEuclidean - prevPos);
+
+                            float tNear, tFar;
+                            if (intersectCube(prevPos, rayDirection, objectData.center, cubeHalfSide, tNear, tFar))
+                            {
+                                hitObject = true;
+                                hitPoint = prevPos + rayDirection * tNear;
+                                normal = getCubeNormal(hitPoint, objectData.center, cubeHalfSide);
+                                hitDistance = tNear;
+                            }
                         }
 
-                        glm::vec3 dirToCamera = normalize(
-                            glm::vec3(rayPositions[k - 1 + rayInd * numRayPositions] - pos));
+                        if (hitObject && hitDistance < closestDistance)
+                        {
+                            closestDistance = hitDistance;
+                            intersectsPrimitive = true;
 
-                        Hit hit = {posIntersection, dirToCamera, sphereData};
-                        glm::vec3 color_vec =
-                            shadePixel(hit, primitiveTexture, BumpMap{nullptr, 0, 0},
-                                       lights) *
-                            255.f;
-                        color = RGBA{static_cast<std::uint8_t>(std::min(255.f, color_vec.x)),
-                                     static_cast<std::uint8_t>(std::min(255.f, color_vec.y)),
-                                     static_cast<std::uint8_t>(std::min(255.f, color_vec.z)), 255};
+                            // sample the texture color
+                            glm::vec4 posIntersection;
+                            if (pos[3] > 0)
+                            {
+                                posIntersection = glm::vec4(hitPoint, 1.0);
+                            }
+                            else
+                            {
+                                posIntersection = glm::vec4(hitPoint, -1.0);
+                            }
+
+                            glm::vec3 dirToCamera = normalize(
+                                glm::vec3(rayPositions[k - 1 + rayInd * numRayPositions] - pos));
+
+                            Hit hit = {posIntersection, dirToCamera, objectData};
+                            glm::vec3 color_vec =
+                                shadePixel(hit, currentObject.textureFile, BumpMap{nullptr, 0, 0},
+                                           lights, currentObject.type, normal) *
+                                255.f;
+                            finalColor = RGBA{static_cast<std::uint8_t>(std::min(255.f, color_vec.x)),
+                                              static_cast<std::uint8_t>(std::min(255.f, color_vec.y)),
+                                              static_cast<std::uint8_t>(std::min(255.f, color_vec.z)), 255};
+
+                            break;
+                        }
                     }
                 }
             }
 
+            if (intersectsPrimitive)
+            {
+                color = finalColor;
+            }
+
             // if not, display the skybox texture
-            if (!intersectsSphere && abs(equatorialRay.l) > lMax)
+            if (!intersectsPrimitive && abs(equatorialRay.l) > lMax)
             {
                 if (equatorialRay.l > 0.0)
                 {
@@ -293,11 +379,18 @@ void render(RGBA *framebuffer,
             float dt,
             float cameraDistance,
             SphereData sphereData,
-            std::vector<SceneLightData> lights) {
+            std::vector<SceneLightData> lights)
+{
     // defaults if not specified
     float cameraTheta = M_PI / 2.0f;
     float cameraPhi = 0.f;
-    render(framebuffer, outWidth, outHeight, sphereUpper, sphereLower, primitiveTexture, fovW, wp, dt, cameraDistance, cameraTheta, cameraPhi, sphereData, lights);
+    Object obj;
+    obj.type = PrimitiveType::Sphere;
+    obj.radius = sphereData.radius;
+    obj.textureFile = primitiveTexture;
+    obj.points.push_back({sphereData.center.x, sphereData.center.y, sphereData.center.z, sphereData.radius, 0.0f});
+    std::vector<Object> objects = {obj};
+    render(framebuffer, outWidth, outHeight, sphereUpper, sphereLower, objects, fovW, wp, dt, cameraDistance, cameraTheta, cameraPhi, lights);
 }
 
 // // this function traces the rays
@@ -399,7 +492,8 @@ bool renderSingleImage(
     QImage outputImage, QString outputPath,
     RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sphereUpper,
     const ImageData &sphereLower, const ImageData &primitiveTexture, float fovW,
-    WormholeParams wp, float dt, float cameraDistance, SphereData sphereData, std::vector<SceneLightData> lights) {
+    WormholeParams wp, float dt, float cameraDistance, SphereData sphereData, std::vector<SceneLightData> lights)
+{
 
     render(framebuffer,
            outWidth,
@@ -416,9 +510,11 @@ bool renderSingleImage(
 
     // 5. Save output
     bool ok = outputImage.save(outputPath);
-    if (!ok) ok = outputImage.save(outputPath, "PNG");
+    if (!ok)
+        ok = outputImage.save(outputPath, "PNG");
 
-    if (!ok) {
+    if (!ok)
+    {
         std::cerr << "Failed to save output image: "
                   << outputPath.toStdString() << "\n";
         return 1;
@@ -434,27 +530,38 @@ bool renderPath(
     RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sphereUpper,
     const ImageData &sphereLower, const ImageData &primitiveTexture, float fovW,
     WormholeParams wp, float dt, float cameraDistance, SphereData sphereData, std::vector<SceneLightData> lights,
-    std::vector<glm::vec4> &keyframes, int numPhotos) {
+    std::vector<glm::vec4> &keyframes, int numPhotos)
+{
 
     // create paths
     cameraPath paths;
     paths.buildFromKeyframes(keyframes, numPhotos, pathtype::PATHTYPE_LINEAR);
 
+    Object obj;
+    obj.type = PrimitiveType::Sphere;
+    obj.radius = sphereData.radius;
+    obj.textureFile = primitiveTexture;
+    obj.points.push_back({sphereData.center.x, sphereData.center.y, sphereData.center.z, sphereData.radius, 0.0f});
+    std::vector<Object> objects = {obj};
+
     // generate each photo
     int photoNum = 0;
-    for (auto cameraPoint : paths.getPoints()) {
+    for (auto cameraPoint : paths.getPoints())
+    {
         QString output = outputPath + "/" + QString::number(photoNum) + ".png";
         photoNum += 1;
         float cameraTheta = cameraPoint.theta;
         float cameraDistance = cameraPoint.r;
         float cameraPhi = cameraPoint.phi;
-        render(framebuffer, outWidth, outHeight, sphereUpper, sphereLower, primitiveTexture, fovW, wp, dt, cameraDistance, cameraTheta, cameraPhi, sphereData, lights);
+        render(framebuffer, outWidth, outHeight, sphereUpper, sphereLower, objects, fovW, wp, dt, cameraDistance, cameraTheta, cameraPhi, lights);
 
         // load photo
         bool ok = outputImage.save(output);
-        if (!ok) ok = outputImage.save(output, "PNG");
+        if (!ok)
+            ok = outputImage.save(output, "PNG");
 
-        if (!ok) {
+        if (!ok)
+        {
             std::cerr << "Failed to save output image: "
                       << output.toStdString() << "\n";
             return 1;
@@ -464,52 +571,53 @@ bool renderPath(
 }
 
 bool renderFrames(QImage outputImage,
-                 FrameData frameData,
-                 RGBA *framebuffer,
-                 int outWidth,
-                 int outHeight,
-                 const ImageData &sphereUpper,
-                 const ImageData &sphereLower,
-                 float fovW,
-                 WormholeParams wp,
-                 float dt,
-                 std::vector<SceneLightData> lights) {
+                  FrameData frameData,
+                  RGBA *framebuffer,
+                  int outWidth,
+                  int outHeight,
+                  const ImageData &sphereUpper,
+                  const ImageData &sphereLower,
+                  float fovW,
+                  WormholeParams wp,
+                  float dt,
+                  std::vector<SceneLightData> lights)
+{
 
     float tMin = frameData.tMin;
     float tMax = frameData.tMax;
     float tEnd = frameData.numPhotos;
 
-    for (int i = 0 ; i < frameData.numPhotos; ++i) {
+    for (int i = 0; i < frameData.numPhotos; ++i)
+    {
         float u = float(i) / tEnd;
-        float t = tMin + u * (tMax-tMin);
+        float t = tMin + u * (tMax - tMin);
 
         glm::vec3 camCoords = frameData.cameraAtT(t);
-        auto objs           = frameData.objectsAtT(t);
-        Sphere singleSphere      = objs[0]; // CURRENTLY SELECTS A SINGLE SPHERE BECAUSE THAT'S WHAT IT DO
-        glm::vec3 spherePos(singleSphere.points[0][0], singleSphere.points[0][1], singleSphere.points[0][2]);
-        SphereData sphereData(spherePos, singleSphere.points[0][3], -length(spherePos));
+        auto objs = frameData.objectsAtT(t);
 
         render(framebuffer,
                outWidth,
                outHeight,
                sphereUpper,
                sphereLower,
-               singleSphere.textureFile,
+               objs,
                fovW,
                wp,
                dt,
                camCoords.x,
                camCoords.y,
                camCoords.z,
-               sphereData,
                lights);
 
         // 3. Decide output path
         QString outFilePath;
-        if (frameData.numPhotos == 1) {
+        if (frameData.numPhotos == 1)
+        {
             // Single frame: frameData.outputPath is a file path, e.g. "output/saturn.png"
             outFilePath = frameData.outputPath;
-        } else {
+        }
+        else
+        {
             // Multiple frames: frameData.outputPath is a folder, e.g. "output/saturn_wide_path"
             QDir outDir(frameData.outputPath);
 
@@ -519,7 +627,8 @@ bool renderFrames(QImage outputImage,
         }
 
         // 4. Save
-        if (!outputImage.save(outFilePath)) {
+        if (!outputImage.save(outFilePath))
+        {
             qWarning() << "Failed to save frame to" << outFilePath;
             return false;
         }

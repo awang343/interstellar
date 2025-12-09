@@ -134,7 +134,7 @@ bool loadSceneInfoFromJson(const QString &path, SceneInfo &outScene)
         return true;
     };
 
-    auto getObjectsOptional = [&](const QString &key, std::vector<Sphere> &dst) {
+    auto getObjectsOptional = [&](const QString &key, std::vector<Object> &dst) {
         dst.clear();
 
         if (!obj.contains(key)) {
@@ -159,7 +159,37 @@ bool loadSceneInfoFromJson(const QString &path, SceneInfo &outScene)
             }
 
             QJsonObject objEntry = objectsArray[i].toObject();
-            Sphere o;
+            Object o;
+
+            // --- type (optional, defaults to Sphere) ---
+            if (objEntry.contains("type") && objEntry["type"].isString()) {
+                QString typeStr = objEntry["type"].toString().toLower();
+                if (typeStr == "cube") {
+                    o.type = PrimitiveType::Cube;
+                } else {
+                    o.type = PrimitiveType::Sphere;
+                }
+            } else {
+                o.type = PrimitiveType::Sphere;
+            }
+
+            // --- radius (for spheres) ---
+            if (o.type == PrimitiveType::Sphere) {
+                if (objEntry.contains("radius") && objEntry["radius"].isDouble()) {
+                    o.radius = static_cast<float>(objEntry["radius"].toDouble());
+                } else {
+                    o.radius = 0.5f;
+                }
+            }
+
+            // --- side (for cubes) ---
+            if (o.type == PrimitiveType::Cube) {
+                if (objEntry.contains("side") && objEntry["side"].isDouble()) {
+                    o.side = static_cast<float>(objEntry["side"].toDouble());
+                } else {
+                    o.side = 1.0f;
+                }
+            }
 
             // --- textureFile ---
             if (!objEntry.contains("textureFile") || !objEntry["textureFile"].isString()) {
@@ -214,8 +244,6 @@ bool loadSceneInfoFromJson(const QString &path, SceneInfo &outScene)
 
         return true;
     };
-
-
 
     // ----------------------
     //   Texture paths
