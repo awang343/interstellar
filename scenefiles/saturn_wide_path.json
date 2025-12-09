@@ -15,14 +15,29 @@
 
   "dt": -0.01,
   "cameraDistance": -6.3,
+
+  "useObjects": true,
+  "objects": [
+    {
+      "textureFile": "texture/bricks.jpg",
+      "objectPoints": [
+        [0.0, 2.0, 0.0, 0.5, 0.0],
+        [1.0, 2.0, 0.0, 0.5, 4.0]
+      ]
+    }
+
+  ],
+
+  "useFrameData": true,
+  "outputFolder": "output/saturn_wide_path",
+  "numPhotos": 20,
+
   "useCameraPath": true,
-  "pathPoints": [
+  "cameraPoints": [
     [-6, 1.57079632679, 0, 0],
     [-6, 1.57079632679, 0.785398163397, 1],
     [-6, 1.57079632679, 1.57079632679, 2],
-    [-6, 1.57079632679, 2.35619449019, 2],
-    [-6, 1.57079632679, 3.14159265359, 2]
-  ],
-  "numPhotos": 20,
-  "outputFolder": "output/saturn_wide_path"
+    [-6, 1.57079632679, 2.35619449019, 3],
+    [-6, 1.57079632679, 3.14159265359, 4]
+  ]
 }

@@ -1,17 +1,11 @@
 #pragma once
 
-#include "utils/rgba.h"
+#include "framedata.h"
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <glm/glm.hpp>
 
-// a struct containing info of an image
-struct ImageData {
-    int width  = 0;
-    int height = 0;
-    std::vector<RGBA> pixels;  // size = width * height
-};
 
 struct BumpMap
 {
@@ -38,9 +32,9 @@ struct SceneInfo {
     float dt;
     float cameraDistance;
 
+    FrameData frameData;
+
     bool usePaths;
-    std::vector<glm::vec4> paths;
-    int numPhotos;
     float cameraTheta = M_PI/2.0f;
     float cameraPhi = 0.0f;
 };

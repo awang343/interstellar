@@ -66,3 +66,16 @@ bool renderPath(
     const ImageData &sphereLower, const ImageData &primitiveTexture, float fovW,
     WormholeParams wp, float dt, float cameraDistance, SphereData sphereData, std::vector<SceneLightData> lights,
     std::vector<glm::vec4> &keyFrames, int numPhotos);
+
+bool renderFrames(
+    QImage outputImage,
+    FrameData frameData,
+    RGBA *framebuffer,
+    int outWidth,
+    int outHeight,
+    const ImageData &sphereUpper,
+    const ImageData &sphereLower,
+    float fovW,
+    WormholeParams wp,
+    float dt,
+    std::vector<SceneLightData> lights);

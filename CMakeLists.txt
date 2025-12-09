@@ -37,6 +37,8 @@ add_executable(${PROJECT_NAME}
   src/renderer.h src/renderer.cpp
   src/lighting.h src/lighting.cpp
   src/textures.h src/textures.cpp
+  src/framedata.h src/framedata.cpp
+  src/utils/structs.h
 
 )
 

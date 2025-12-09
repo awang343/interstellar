@@ -64,14 +64,6 @@ bool loadSceneInfoFromJson(const QString &path, SceneInfo &outScene)
         return true;
     };
 
-    auto getStringOptional = [&](const QString &key, QString &dst) {
-        if (!obj.contains(key) || !obj[key].isString()) {
-            obj[key] = "";
-        }
-        dst = obj[key].toString();
-        return true;
-    };
-
     auto getIntOptional = [&](const QString &key, int &dst) {
         if (!obj.contains(key) || !obj[key].isDouble()) {
             dst = 1;
@@ -142,6 +134,88 @@ bool loadSceneInfoFromJson(const QString &path, SceneInfo &outScene)
         return true;
     };
 
+    auto getObjectsOptional = [&](const QString &key, std::vector<Sphere> &dst) {
+        dst.clear();
+
+        if (!obj.contains(key)) {
+            std::cerr << "Optional key '" << key.toStdString()
+            << "' not found. Using empty objects list.\n";
+            return false;
+        }
+
+        if (!obj[key].isArray()) {
+            std::cerr << "Field '" << key.toStdString()
+            << "' must be an array.\n";
+            return false;
+        }
+
+        QJsonArray objectsArray = obj[key].toArray();
+        dst.reserve(objectsArray.size());
+
+        for (int i = 0; i < objectsArray.size(); ++i) {
+            if (!objectsArray[i].isObject()) {
+                std::cerr << "objects[" << i << "] is not an object.\n";
+                return false;
+            }
+
+            QJsonObject objEntry = objectsArray[i].toObject();
+            Sphere o;
+
+            // --- textureFile ---
+            if (!objEntry.contains("textureFile") || !objEntry["textureFile"].isString()) {
+                std::cerr << "objects[" << i << "].textureFile is missing or not a string.\n";
+                return false;
+            }
+
+            QString texPath = objEntry["textureFile"].toString();
+
+            if (!loadImageToStruct(texPath, o.textureFile)) {
+                std::cerr << "issue loading " << texPath.toStdString() << "\n";
+                return false;
+            }
+
+            // --- objectPoints ---
+            if (!objEntry.contains("objectPoints") || !objEntry["objectPoints"].isArray()) {
+                std::cerr << "objects[" << i << "].objectPoints is missing or not an array.\n";
+                return false;
+            }
+
+            QJsonArray pointsArray = objEntry["objectPoints"].toArray();
+            std::vector<std::vector<float>> points;
+            points.reserve(pointsArray.size());
+
+            for (int p = 0; p < pointsArray.size(); ++p) {
+                if (!pointsArray[p].isArray()) {
+                    std::cerr << "objects[" << i << "].objectPoints[" << p
+                              << "] is not an array.\n";
+                    return false;
+                }
+
+                QJsonArray inner = pointsArray[p].toArray();
+                std::vector<float> row;
+                row.reserve(inner.size());
+
+                for (int j = 0; j < inner.size(); ++j) {
+                    if (!inner[j].isDouble()) {
+                        std::cerr << "objects[" << i << "].objectPoints[" << p
+                                  << "][" << j << "] must be a number.\n";
+                        return false;
+                    }
+                    row.push_back(static_cast<float>(inner[j].toDouble()));
+                }
+
+                points.push_back(std::move(row));
+            }
+
+            o.points = std::move(points);
+
+            dst.push_back(std::move(o));
+        }
+
+        return true;
+    };
+
+
 
     // ----------------------
     //   Texture paths
@@ -183,25 +257,61 @@ bool loadSceneInfoFromJson(const QString &path, SceneInfo &outScene)
     if (!getFloat("cameraDistance", outScene.cameraDistance)) return false;
 
     // ----------------------
-    //   Camera paths (optional)
+    //  FrameData (optional but always created)
     // ----------------------
 
-    if (getBoolOptional("useCameraPath", outScene.usePaths) && outScene.usePaths){
-        std::cout << "Using camera paths" << std::endl;
-        getPathsOptional("pathPoints", outScene.paths);
+    getIntOptional("numPhotos", outScene.frameData.numPhotos);
 
-        QFileInfo fi(outScene.outputPath);
-        QDir outDir = fi.dir();
+    if (outScene.frameData.numPhotos > 1) {
+        std::cout << "numPhotos > 1" << std::endl;
+        // output will have multiple frames, ensure there exists an output folder
+        if (!getString("outputFolder", outScene.frameData.outputPath)) {
+            std::cerr << "Multiple frames to be rendered but no outputFolder specified\n";
+        }
+
+        // ensures there exists an output folder at specified
+        QDir outDir(outScene.frameData.outputPath);
         if (!outDir.exists()) {
             outDir.mkpath(".");
         }
 
-        getIntOptional("numPhotos", outScene.numPhotos);
-        getStringOptional("outputFolder", outScene.outputPath);
+
+
     } else {
-        std::cout << "Not using camera paths" << std::endl;
+        // if numPhotos not specified, set to 1
+        std::cout << "numPhotos = 1" << std::endl;
+        outScene.frameData.numPhotos = 1;
+
+        // set output to outputImage
+        outScene.frameData.outputPath = outScene.outputPath;
     }
 
+    // ----------------------
+    //  Objects (optional, default to green sphere at (0,2,0) with r=0.5)
+    // ----------------------
+
+    if (!getObjectsOptional("objects", outScene.frameData.objects)) {
+        std::cout << "Either no objects specified or issue with parsing. Using default." << std::endl;
+
+        // if no objects in use, load basic object
+        outScene.frameData.loadDefaultObject();
+    } else {
+        std::cout << "Objects loaded" << std::endl;
+    }
+
+    // ----------------------
+    //   Camera paths (optional)
+    // ----------------------
+
+    if (!getPathsOptional("cameraPoints", outScene.frameData.cameraPoints)) {
+        std::cout << "Either no camera points specified or issue with parsing. Using cameraDistance." << std::endl;
+         outScene.frameData.loadDefaultCamera(outScene.cameraDistance);
+    } else {
+        std::cout << "Camera points loaded" << std::endl;
+    }
+
+    // Set tmin, tmax for FrameData
+    outScene.frameData.setTimeRange();
 
     return true;
 }

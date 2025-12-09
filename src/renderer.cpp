@@ -436,8 +436,11 @@ bool renderPath(
     WormholeParams wp, float dt, float cameraDistance, SphereData sphereData, std::vector<SceneLightData> lights,
     std::vector<glm::vec4> &keyframes, int numPhotos) {
 
+    // create paths
     cameraPath paths;
     paths.buildFromKeyframes(keyframes, numPhotos, pathtype::PATHTYPE_LINEAR);
+
+    // generate each photo
     int photoNum = 0;
     for (auto cameraPoint : paths.getPoints()) {
         QString output = outputPath + "/" + QString::number(photoNum) + ".png";
@@ -447,6 +450,7 @@ bool renderPath(
         float cameraPhi = cameraPoint.phi;
         render(framebuffer, outWidth, outHeight, sphereUpper, sphereLower, primitiveTexture, fovW, wp, dt, cameraDistance, cameraTheta, cameraPhi, sphereData, lights);
 
+        // load photo
         bool ok = outputImage.save(output);
         if (!ok) ok = outputImage.save(output, "PNG");
 
@@ -457,4 +461,68 @@ bool renderPath(
         }
     }
     return 0;
+}
+
+bool renderFrames(QImage outputImage,
+                 FrameData frameData,
+                 RGBA *framebuffer,
+                 int outWidth,
+                 int outHeight,
+                 const ImageData &sphereUpper,
+                 const ImageData &sphereLower,
+                 float fovW,
+                 WormholeParams wp,
+                 float dt,
+                 std::vector<SceneLightData> lights) {
+
+    float tMin = frameData.tMin;
+    float tMax = frameData.tMax;
+    float tEnd = frameData.numPhotos-1.0f;
+
+    for (int i = 0 ; i < frameData.numPhotos; ++i) {
+        float u = float(i) / tEnd;
+        float t = tMin + u * (tMax-tMin);
+
+        glm::vec3 camCoords = frameData.cameraAtT(t);
+        auto objs           = frameData.objectsAtT(t);
+        Sphere singleSphere      = objs[0]; // CURRENTLY SELECTS A SINGLE SPHERE BECAUSE THAT'S WHAT IT DO
+        glm::vec3 spherePos(singleSphere.points[0][0], singleSphere.points[0][1], singleSphere.points[0][2]);
+        SphereData sphereData(spherePos, singleSphere.points[0][3], -length(spherePos));
+
+        render(framebuffer,
+               outWidth,
+               outHeight,
+               sphereUpper,
+               sphereLower,
+               singleSphere.textureFile,
+               fovW,
+               wp,
+               dt,
+               camCoords.x,
+               camCoords.y,
+               camCoords.z,
+               sphereData,
+               lights);
+
+        // 3. Decide output path
+        QString outFilePath;
+        if (frameData.numPhotos == 1) {
+            // Single frame: frameData.outputPath is a file path, e.g. "output/saturn.png"
+            outFilePath = frameData.outputPath;
+        } else {
+            // Multiple frames: frameData.outputPath is a folder, e.g. "output/saturn_wide_path"
+            QDir outDir(frameData.outputPath);
+
+            // Use zero-padded filenames like 000.png, 001.png, ...
+            QString fileName = QString("%1.png").arg(i, 3, 10, QChar('0'));
+            outFilePath = outDir.filePath(fileName);
+        }
+
+        // 4. Save
+        if (!outputImage.save(outFilePath)) {
+            qWarning() << "Failed to save frame to" << outFilePath;
+            return false;
+        }
+    }
+    return true;
 }

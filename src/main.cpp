@@ -8,41 +8,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "lighting.h"
 #include "src/utils/rgba.h"
 #include "src/raytrace.h"
 #include "utils/scenefileparser.h"
 #include "renderer.h"
-
-
-// this function loads the two celestial sphere textures into image data
-bool loadImageToStruct(const QString &path, ImageData &out)
-{
-    QImage img(path);
-    if (img.isNull()) {
-        std::cerr << "Failed to load image: " << path.toStdString() << "\n";
-        return false;
-    }
-
-    QImage converted = img.convertToFormat(QImage::Format_RGBA8888);
-
-    out.width  = converted.width();
-    out.height = converted.height();
-    out.pixels.resize(out.width * out.height);
-
-    for (int y = 0; y < out.height; ++y) {
-        const uchar *line = converted.constScanLine(y);
-        for (int x = 0; x < out.width; ++x) {
-            const uchar *src = line + 4 * x;
-            RGBA &dst = out.pixels[y * out.width + x];
-            dst.r = src[0];
-            dst.g = src[1];
-            dst.b = src[2];
-            dst.a = src[3];
-        }
-    }
-    return true;
-}
 
 // the main function for the program
 int main(int argc, char *argv[]) {
@@ -99,44 +68,21 @@ int main(int argc, char *argv[]) {
     // make point light
     SceneLightData light{LightType::LIGHT_POINT, glm::vec4(1.0), glm::vec3(0.8, 0.05, 0.0), glm::vec4(10.0, 2.0, 10.0, -1.0), glm::vec3(-1.0, 0.0, -1.0), 1.0, 1.0};
 
-    if (!scene.usePaths) {
-        bool ok = renderSingleImage(
-            outputImage,
-            scene.outputPath,
-            framebuffer,
-            scene.outWidth,
-            scene.outHeight,
-            sphereUpper,
-            sphereLower,
-            primitiveTexture,
-            scene.viewPlaneWidthAngle, // in radians
-            wp,
-            scene.dt,
-            scene.cameraDistance,
-            sphereData,
-            std::vector<SceneLightData>{light});
-        if (!ok) {
-            return 1;
-        }
-    } else {
-        bool ok = renderPath(
-            outputImage,
-            scene.outputPath,
-            framebuffer,
-            scene.outWidth,
-            scene.outHeight,
-            sphereUpper,
-            sphereLower,
-            primitiveTexture,
-            scene.viewPlaneWidthAngle, // in radians
-            wp,
-            scene.dt,
-            scene.cameraDistance,
-            sphereData,
-            std::vector<SceneLightData>{light},
-            scene.paths,
-            scene.numPhotos);
-    }
+    bool ok = renderFrames(
+        outputImage,
+        scene.frameData,
+        framebuffer,
+        scene.outWidth,
+        scene.outHeight,
+        sphereUpper,
+        sphereLower,
+        scene.viewPlaneWidthAngle,
+        wp,
+        scene.dt,
+        std::vector<SceneLightData>{light});
 
+    if (!ok) return 1;
+
+    return 0;
 }
 
