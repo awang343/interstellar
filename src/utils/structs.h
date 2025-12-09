@@ -11,10 +11,31 @@ struct ImageData {
     std::vector<RGBA> pixels;  // size = width * height
 };
 
+
+
 // a struct containing info of a primitive
 struct Sphere {
     ImageData textureFile; // should change to path to allow for hashing for multiple objects
     std::vector<std::vector<float>> points;
+};
+
+struct Cube {
+    ImageData textureFile;
+    std::vector<std::vector<float>> points;  
+    float side;  
+};
+
+
+enum class PrimitiveType { Sphere, Cube };
+
+struct Object {
+    PrimitiveType type;
+
+    ImageData textureFile;
+    std::vector<std::vector<float>> points; 
+
+    float radius = 0.0f;  
+    float side   = 0.0f;  
 };
 
 

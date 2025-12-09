@@ -12,7 +12,8 @@ public:
     FrameData();
 
     glm::vec3 cameraAtT(float t);
-    std::vector<Sphere> objectsAtT(float t);
+    std::vector<Object> objectsAtT(float t);
+
 
     void loadDefaultObject();
     void loadDefaultCamera(float cameraDistance);
@@ -24,7 +25,8 @@ public:
     int numPhotos;
     QString outputPath;
     std::vector<glm::vec4> cameraPoints;
-    std::vector<Sphere> objects;
+    std::vector<Object> objects;
+
 };
 
 
