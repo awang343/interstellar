@@ -477,7 +477,7 @@ bool renderFrames(QImage outputImage,
 
     float tMin = frameData.tMin;
     float tMax = frameData.tMax;
-    float tEnd = frameData.numPhotos-1.0f;
+    float tEnd = frameData.numPhotos;
 
     for (int i = 0 ; i < frameData.numPhotos; ++i) {
         float u = float(i) / tEnd;
