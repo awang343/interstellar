@@ -150,8 +150,8 @@ glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bu
     uv uv_map;
     glm::vec3 obj_normal;
 
-    // if (objectType == PrimitiveType::Sphere)
-    // {
+    if (objectType == PrimitiveType::Sphere)
+    {
         const glm::vec3 normalized_point = glm::normalize(obj_point);
         uv_map = get_uv(normalized_point);
 
@@ -159,12 +159,12 @@ glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bu
         obj_normal = enableBumpMap && bump_map.width > 0
                          ? get_bump_normal(bump_map, FilterType::Bilinear, uv_map, 0.01, normalized_point)
                          : normalized_point;
-    // }
-    // else
-    // {
-    //     uv_map = get_cube_uv(obj_point, surfaceNormal);
-    //     obj_normal = surfaceNormal;
-    // }
+    }
+    else
+    {
+        uv_map = get_cube_uv(obj_point, surfaceNormal);
+        obj_normal = surfaceNormal;
+    }
 
     const glm::vec3 N = glm::normalize(/*transform **/ obj_normal);
     // const glm::vec3 V = glm::normalize(world_camera - glm::vec3(intersect));
