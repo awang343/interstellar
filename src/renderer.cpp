@@ -272,20 +272,20 @@ void render(RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sph
                 for (const Object &currentObject : objects)
                 {
                     glm::vec3 objectPos(currentObject.points[0][0], currentObject.points[0][1], currentObject.points[0][2]);
-                    SphereData objectData;
+                    HitObjectData objectData;
                     float cubeHalfSide = 0.0f;
                     float lMinObject, lMaxObject;
 
                     if (currentObject.type == PrimitiveType::Sphere)
                     {
-                        objectData = SphereData{objectPos, currentObject.points[0][3], -length(objectPos)};
-                        lMinObject = objectData.l - objectData.radius;
-                        lMaxObject = objectData.l + objectData.radius;
+                        objectData = HitObjectData{objectPos, currentObject.points[0][3], -length(objectPos)};
+                        lMinObject = objectData.l - objectData.size;
+                        lMaxObject = objectData.l + objectData.size;
                     }
                     else
                     {
                         cubeHalfSide = currentObject.side * 0.5f;
-                        objectData = SphereData{objectPos, cubeHalfSide * 1.732f, -length(objectPos)};
+                        objectData = HitObjectData{objectPos, cubeHalfSide, -length(objectPos)};
                         lMinObject = objectData.l - cubeHalfSide * 1.732f;
                         lMaxObject = objectData.l + cubeHalfSide * 1.732f;
                     }
@@ -306,10 +306,10 @@ void render(RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sph
                             if (currentObject.type == PrimitiveType::Sphere)
                             {
                                 float dist = length(posEuclidean - objectData.center);
-                                if (dist - objectData.radius < 0.0)
+                                if (dist - objectData.size < 0.0)
                                 {
                                     hitObject = true;
-                                    hitPoint = normalize(posEuclidean - objectData.center) * objectData.radius + objectData.center;
+                                    hitPoint = normalize(posEuclidean - objectData.center) * objectData.size + objectData.center;
                                     normal = normalize(hitPoint - objectData.center);
                                     hitDistance = length(hitPoint - glm::vec3(rayPositions[k - 1 + rayInd * numRayPositions]));
                                 }
@@ -408,7 +408,7 @@ void render(RGBA *framebuffer,
             WormholeParams wp,
             float dt,
             float cameraDistance,
-            SphereData sphereData,
+            HitObjectData sphereData,
             std::vector<SceneLightData> lights)
 {
     // defaults if not specified
@@ -416,9 +416,9 @@ void render(RGBA *framebuffer,
     float cameraPhi = 0.f;
     Object obj;
     obj.type = PrimitiveType::Sphere;
-    obj.radius = sphereData.radius;
+    obj.radius = sphereData.size;
     obj.textureFile = primitiveTexture;
-    obj.points.push_back({sphereData.center.x, sphereData.center.y, sphereData.center.z, sphereData.radius, 0.0f});
+    obj.points.push_back({sphereData.center.x, sphereData.center.y, sphereData.center.z, sphereData.size, 0.0f});
     std::vector<Object> objects = {obj};
     render(framebuffer, outWidth, outHeight, sphereUpper, sphereLower, objects, fovW, wp, dt, cameraDistance, cameraTheta, cameraPhi, lights);
 }
@@ -522,7 +522,7 @@ bool renderSingleImage(
     QImage outputImage, QString outputPath,
     RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sphereUpper,
     const ImageData &sphereLower, const ImageData &primitiveTexture, float fovW,
-    WormholeParams wp, float dt, float cameraDistance, SphereData sphereData, std::vector<SceneLightData> lights)
+    WormholeParams wp, float dt, float cameraDistance, HitObjectData sphereData, std::vector<SceneLightData> lights)
 {
 
     render(framebuffer,
@@ -559,7 +559,7 @@ bool renderPath(
     QImage outputImage, QString outputPath,
     RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sphereUpper,
     const ImageData &sphereLower, const ImageData &primitiveTexture, float fovW,
-    WormholeParams wp, float dt, float cameraDistance, SphereData sphereData, std::vector<SceneLightData> lights,
+    WormholeParams wp, float dt, float cameraDistance, HitObjectData sphereData, std::vector<SceneLightData> lights,
     std::vector<glm::vec4> &keyframes, int numPhotos)
 {
 
@@ -569,9 +569,9 @@ bool renderPath(
 
     Object obj;
     obj.type = PrimitiveType::Sphere;
-    obj.radius = sphereData.radius;
+    obj.radius = sphereData.size;
     obj.textureFile = primitiveTexture;
-    obj.points.push_back({sphereData.center.x, sphereData.center.y, sphereData.center.z, sphereData.radius, 0.0f});
+    obj.points.push_back({sphereData.center.x, sphereData.center.y, sphereData.center.z, sphereData.size, 0.0f});
     std::vector<Object> objects = {obj};
 
     // generate each photo
