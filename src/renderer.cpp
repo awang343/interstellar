@@ -350,26 +350,14 @@ void render(RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sph
 
                 //                 glm::vec3 dirToCamera = normalize(
                 //                     glm::vec3(rayPositions[k - 1 + rayInd * numRayPositions] - pos));
-
-<<<<<<< HEAD
-                //                 Hit hit = {posIntersection, dirToCamera, objectData};
-                //                 glm::vec3 color_vec =
-                //                     shadePixel(hit, currentObject.textureFile, BumpMap{nullptr, 0, 0},
-                //                                lights, currentObject.type, normal) *
-                //                     255.f;
-                //                 finalColor = RGBA{static_cast<std::uint8_t>(std::min(255.f, color_vec.x)),
-                //                                   static_cast<std::uint8_t>(std::min(255.f, color_vec.y)),
-                //                                   static_cast<std::uint8_t>(std::min(255.f, color_vec.z)), 255};
-=======
-                                Hit hit = {posIntersection, dirToCamera, objectData};
-                                glm::vec3 color_vec =
-                                    shadePixel(hit, currentObject.textureFile, currentObject.bumpMapFile,
-                                               lights, currentObject.type, normal) *
-                                    255.f;
-                                finalColor = RGBA{static_cast<std::uint8_t>(std::min(255.f, color_vec.x)),
-                                                  static_cast<std::uint8_t>(std::min(255.f, color_vec.y)),
-                                                  static_cast<std::uint8_t>(std::min(255.f, color_vec.z)), 255};
->>>>>>> 32b38963e9693634cbcb5be3406f2ee945553732
+                                // Hit hit = {posIntersection, dirToCamera, objectData};
+                                // glm::vec3 color_vec =
+                                //     shadePixel(hit, currentObject.textureFile, currentObject.bumpMapFile,
+                                //                lights, currentObject.type, normal) *
+                                //     255.f;
+                                // finalColor = RGBA{static_cast<std::uint8_t>(std::min(255.f, color_vec.x)),
+                                //                   static_cast<std::uint8_t>(std::min(255.f, color_vec.y)),
+                                //                   static_cast<std::uint8_t>(std::min(255.f, color_vec.z)), 255};
 
                 //                 break;
                 //             }

@@ -1,6 +1,6 @@
 {
   "upperTexture": "texture/london_inv.png",
-  "lowerTexture": "texture/arc.png",
+  "lowerTexture": "texture/arc_day.png",
   "primitiveTexture": "texture/earth.png",
   "outputImage": "output/paris_to_london.png",
 
