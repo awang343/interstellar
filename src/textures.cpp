@@ -10,6 +10,25 @@ uv get_uv(const glm::vec3 &obj_point)
     return uv{u, v};
 }
 
+uv get_cube_uv(const glm::vec3 &obj_point, const glm::vec3 &normal)
+{
+    float u, v;
+    glm::vec3 absNormal = glm::abs(normal);
+    
+    if (absNormal.x > absNormal.y && absNormal.x > absNormal.z) {
+        u = (obj_point.z / 0.5f + 1.0f) * 0.5f;
+        v = (obj_point.y / 0.5f + 1.0f) * 0.5f;
+    } else if (absNormal.y > absNormal.z) {
+        u = (obj_point.x / 0.5f + 1.0f) * 0.5f;
+        v = (obj_point.z / 0.5f + 1.0f) * 0.5f;
+    } else {
+        u = (obj_point.x / 0.5f + 1.0f) * 0.5f;
+        v = (obj_point.y / 0.5f + 1.0f) * 0.5f;
+    }
+    
+    return uv{u, v};
+}
+
 static std::pair<glm::vec3, glm::vec3> get_dpduv(const uv &uv_coords)
 {
     const float r = 0.5f;

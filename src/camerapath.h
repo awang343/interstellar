@@ -3,6 +3,7 @@
 
 #include <math.h>
 #include <vector>
+#include <glm/glm.hpp>
 
 struct cameradata {
     float r     = -5.0f;        // camera distance
@@ -24,6 +25,11 @@ public:
     void addPath(float start_r, float start_theta, float start_phi,
                  float end_r, float end_theta, float end_phi,
                  pathtype path, int numPoints);
+
+    void buildFromKeyframes(
+        const std::vector<glm::vec4> &keyframes,
+        int numPhotos,
+        pathtype path);
 
 
 private:
