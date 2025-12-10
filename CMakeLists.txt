@@ -39,7 +39,7 @@ add_executable(${PROJECT_NAME}
   src/textures.h src/textures.cpp
   src/framedata.h src/framedata.cpp
   src/utils/structs.h
-
+  src/utils/imagereader.h src/utils/imagereader.cpp
 )
 
 # GLM: this creates its library and allows you to `#include "glm/..."`

@@ -204,6 +204,19 @@ bool loadSceneInfoFromJson(const QString &path, SceneInfo &outScene)
                 return false;
             }
 
+            // --- bumpMapFile ---
+            if (!objEntry.contains("bumpMapFile") || !objEntry["bumpMapFile"].isString()) {
+                std::cerr << "objects[" << i << "].bumpMapFile is missing or not a string.\n";
+                return false;
+            }
+
+            QString bumpPath = objEntry["bumpMapFile"].toString();
+
+            if (!loadBumpMapToStruct(bumpPath, o.bumpMapFile)) {
+                std::cerr << "issue loading " << bumpPath.toStdString() << "\n";
+                return false;
+            }
+
             // --- objectPoints ---
             if (!objEntry.contains("objectPoints") || !objEntry["objectPoints"].isArray()) {
                 std::cerr << "objects[" << i << "].objectPoints is missing or not an array.\n";
@@ -251,7 +264,6 @@ bool loadSceneInfoFromJson(const QString &path, SceneInfo &outScene)
 
     if (!getString("upperTexture",     outScene.upperTexturePath))     return false;
     if (!getString("lowerTexture",     outScene.lowerTexturePath))     return false;
-    if (!getString("primitiveTexture", outScene.primitiveTexturePath)) return false;  // NEW
     if (!getString("outputImage",      outScene.outputPath))           return false;
 
     // ----------------------
