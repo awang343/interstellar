@@ -56,13 +56,10 @@ glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bu
     // const glm::vec3 V = glm::normalize(world_camera - glm::vec3(intersect));
 
     // Blend obj_D with textures
-<<<<<<< HEAD
-    const bool enableTextureMap = true;                    // HARDCODED
-    const FilterType textureFilter = FilterType::Bilinear; // HARDCODED
-=======
+
     const bool enableTextureMap = false;                   // HARDCODED
     const FilterType textureFilter = FilterType::Nearest; // HARDCODED
->>>>>>> cde73025f68ae6409584a0950138b6988e3841dc
+
 
     if (enableTextureMap && texture.width > 0)
     {
