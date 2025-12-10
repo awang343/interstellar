@@ -41,7 +41,7 @@ void FrameData::loadDefaultObject()
     Object o;
     o.type = PrimitiveType::Sphere;
     // set object's only position to be at (0,2,0)
-    o.points.push_back({0.0, 2.0, 0.0, 0.5, 0});
+    o.points.push_back({0.0, 20.0, 0.0, 0.5, 0});
     o.radius = 0.5;
     // set texture file, default to bricks
     loadImageToStruct("texture/bricks.jpg", o.textureFile);
