@@ -292,14 +292,14 @@ void render(RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sph
 
                     if (currentObject.type == PrimitiveType::Sphere)
                     {
-                        objectData = SphereData(objectPos, currentObject.points[0][3], -length(objectPos));
+                        objectData = SphereData{objectPos, currentObject.points[0][3], -length(objectPos)};
                         lMinObject = objectData.l - objectData.radius;
                         lMaxObject = objectData.l + objectData.radius;
                     }
                     else
                     {
                         cubeHalfSide = currentObject.side * 0.5f;
-                        objectData = SphereData(objectPos, cubeHalfSide * 1.732f, -length(objectPos));
+                        objectData = SphereData{objectPos, cubeHalfSide * 1.732f, -length(objectPos)};
                         lMinObject = objectData.l - cubeHalfSide * 1.732f;
                         lMaxObject = objectData.l + cubeHalfSide * 1.732f;
                     }
