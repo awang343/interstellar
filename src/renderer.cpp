@@ -206,6 +206,8 @@ void render(RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sph
         rayPositionCounts[i] = counter;
     }
 
+    const int AA_SAMPLES = 9;
+
     // sample the texture color based on the precomputed ray directions
     for (int j = 0; j < outHeight; ++j)
     {
@@ -213,157 +215,199 @@ void render(RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sph
         {
             int idx = j * outWidth + i;
 
-            // Normalized device coordinates in [-1,1]
-            float ndcW = 2.0 * ((i + 0.5) / static_cast<float>(outWidth)) - 1.0;
-            float ndcH = 2.0 * ((j + 0.5) / static_cast<float>(outHeight)) - 1.0;
+            float r_accum = 0.0f;
+            float g_accum = 0.0f;
+            float b_accum = 0.0f;
 
-            // ray direction
-            glm::vec3 rayDir(1.0, planeWidth * (ndcW), planeHeight * (-ndcH));
-            glm::vec2 normalizedYZ = normalize(rayDir.yz());
-
-            // length at the yz-direction
-            float lengthYZ = length(rayDir.yz());
-            // get the precomputed ray
-            int rayInd =
-                static_cast<int>(ceil(static_cast<float>(numRays) * (lengthYZ / lengthDiagonal)));
-            RayState equatorialRay = rays[rayInd];
-
-            // normalize the angles
-            // first, convert the final ray direction into a unit vector
-            glm::vec4 finalEuclidean(cos(equatorialRay.phi), sin(equatorialRay.phi), 0.0, 0.0);
-            // next, apply the transformation with respect to the tilting of the camera
-            glm::vec3 cameraDirection(cos(phi_c), sin(phi_c), 0.0);
-            // the angle to rotate about the camera direction
-            float angle = atan2(normalizedYZ.y, normalizedYZ.x);
-            glm::mat4 rotationMatrix =
-                glm::rotate(glm::mat4(1.0f), angle, glm::normalize(cameraDirection));
-            glm::vec4 rotatedEuclidean = rotationMatrix * finalEuclidean;
-
-            float thetaFinal = acos(rotatedEuclidean[2] / length(rotatedEuclidean));
-            float phiFinal = atan2(rotatedEuclidean[1], rotatedEuclidean[0]);
-
-            // sample the color
-            RGBA color = {0, 0, 0, 255};
-
-            // if it intersects the sphere, display the color on the sphere
-            bool intersectsPrimitive = false;
-            float closestDistance = std::numeric_limits<float>::max();
-            RGBA finalColor = {0, 0, 0, 255};
-
-            for (const Object &currentObject : objects)
+            for (int sampleIdx = 0; sampleIdx < AA_SAMPLES; ++sampleIdx)
             {
-                glm::vec3 objectPos(currentObject.points[0][0], currentObject.points[0][1], currentObject.points[0][2]);
-                SphereData objectData;
-                float cubeHalfSide = 0.0f;
-                float lMinObject, lMaxObject;
 
-                if (currentObject.type == PrimitiveType::Sphere)
+                float offsetX = 0.0f;
+                float offsetY = 0.0f;
+
+                int gridX = sampleIdx % 3;
+                int gridY = sampleIdx / 3;
+
+                offsetX = (gridX - 1) * 0.33f;
+                offsetY = (gridY - 1) * 0.33f;
+
+                if (sampleIdx == 1)
                 {
-                    objectData = SphereData(objectPos, currentObject.points[0][3], -length(objectPos));
-                    lMinObject = objectData.l - objectData.radius;
-                    lMaxObject = objectData.l + objectData.radius;
+                    offsetX = 0.25f;
                 }
-                else
+                else if (sampleIdx == 2)
                 {
-                    cubeHalfSide = currentObject.side * 0.5f;
-                    objectData = SphereData(objectPos, cubeHalfSide * 1.732f, -length(objectPos));
-                    lMinObject = objectData.l - cubeHalfSide * 1.732f;
-                    lMaxObject = objectData.l + cubeHalfSide * 1.732f;
+                    offsetY = 0.25f;
+                }
+                else if (sampleIdx == 3)
+                {
+                    offsetX = 0.25f;
+                    offsetY = 0.25f;
                 }
 
-                for (int k = 1; k < rayPositionCounts[rayInd]; k++)
+                // Normalized device coordinates in [-1,1]
+                float ndcW = 2.0 * ((i + 0.5 + offsetX) / static_cast<float>(outWidth)) - 1.0;
+                float ndcH = 2.0 * ((j + 0.5 + offsetY) / static_cast<float>(outHeight)) - 1.0;
+
+                // ray direction
+                glm::vec3 rayDir(1.0, planeWidth * (ndcW), planeHeight * (-ndcH));
+                glm::vec2 normalizedYZ = normalize(rayDir.yz());
+
+                // length at the yz-direction
+                float lengthYZ = length(rayDir.yz());
+                // get the precomputed ray
+                int rayInd =
+                    static_cast<int>(ceil(static_cast<float>(numRays) * (lengthYZ / lengthDiagonal)));
+                rayInd = std::min(rayInd, numRays);
+                RayState equatorialRay = rays[rayInd];
+
+                // normalize the angles
+                // first, convert the final ray direction into a unit vector
+                glm::vec4 finalEuclidean(cos(equatorialRay.phi), sin(equatorialRay.phi), 0.0, 0.0);
+                // next, apply the transformation with respect to the tilting of the camera
+                glm::vec3 cameraDirection(cos(phi_c), sin(phi_c), 0.0);
+                // the angle to rotate about the camera direction
+                float angle = atan2(normalizedYZ.y, normalizedYZ.x);
+                glm::mat4 rotationMatrix =
+                    glm::rotate(glm::mat4(1.0f), angle, glm::normalize(cameraDirection));
+                glm::vec4 rotatedEuclidean = rotationMatrix * finalEuclidean;
+
+                float thetaFinal = acos(rotatedEuclidean[2] / length(rotatedEuclidean));
+                float phiFinal = atan2(rotatedEuclidean[1], rotatedEuclidean[0]);
+
+                // sample the color
+                RGBA color = {0, 0, 0, 255};
+
+                // if it intersects the sphere, display the color on the sphere
+                bool intersectsPrimitive = false;
+                float closestDistance = std::numeric_limits<float>::max();
+                RGBA finalColor = {0, 0, 0, 255};
+
+                for (const Object &currentObject : objects)
                 {
-                    glm::vec4 pos = rayPositions[k + rayInd * numRayPositions];
-                    if (pos[3] >= lMinObject && pos[3] <= lMaxObject)
+                    glm::vec3 objectPos(currentObject.points[0][0], currentObject.points[0][1], currentObject.points[0][2]);
+                    SphereData objectData;
+                    float cubeHalfSide = 0.0f;
+                    float lMinObject, lMaxObject;
+
+                    if (currentObject.type == PrimitiveType::Sphere)
                     {
-                        glm::vec3 posEuclidean(pos);
-                        posEuclidean = glm::vec3(rotationMatrix * glm::vec4(posEuclidean, 1.0));
+                        objectData = SphereData(objectPos, currentObject.points[0][3], -length(objectPos));
+                        lMinObject = objectData.l - objectData.radius;
+                        lMaxObject = objectData.l + objectData.radius;
+                    }
+                    else
+                    {
+                        cubeHalfSide = currentObject.side * 0.5f;
+                        objectData = SphereData(objectPos, cubeHalfSide * 1.732f, -length(objectPos));
+                        lMinObject = objectData.l - cubeHalfSide * 1.732f;
+                        lMaxObject = objectData.l + cubeHalfSide * 1.732f;
+                    }
 
-                        bool hitObject = false;
-                        glm::vec3 normal;
-                        glm::vec3 hitPoint;
-                        float hitDistance;
-
-                        if (currentObject.type == PrimitiveType::Sphere)
+                    for (int k = 1; k < rayPositionCounts[rayInd]; k++)
+                    {
+                        glm::vec4 pos = rayPositions[k + rayInd * numRayPositions];
+                        if (pos[3] >= lMinObject && pos[3] <= lMaxObject)
                         {
-                            float dist = length(posEuclidean - objectData.center);
-                            if (dist - objectData.radius < 0.0)
-                            {
-                                hitObject = true;
-                                hitPoint = normalize(posEuclidean - objectData.center) * objectData.radius + objectData.center;
-                                normal = normalize(hitPoint - objectData.center);
-                                hitDistance = length(hitPoint - glm::vec3(rayPositions[k - 1 + rayInd * numRayPositions]));
-                            }
-                        }
-                        else
-                        {
-                            glm::vec3 prevPos = glm::vec3(rayPositions[k - 1 + rayInd * numRayPositions]);
-                            prevPos = glm::vec3(rotationMatrix * glm::vec4(prevPos, 1.0));
-                            glm::vec3 rayDirection = normalize(posEuclidean - prevPos);
+                            glm::vec3 posEuclidean(pos);
+                            posEuclidean = glm::vec3(rotationMatrix * glm::vec4(posEuclidean, 1.0));
 
-                            float tNear, tFar;
-                            if (intersectCube(prevPos, rayDirection, objectData.center, cubeHalfSide, tNear, tFar))
-                            {
-                                hitObject = true;
-                                hitPoint = prevPos + rayDirection * tNear;
-                                normal = getCubeNormal(hitPoint, objectData.center, cubeHalfSide);
-                                hitDistance = tNear;
-                            }
-                        }
+                            bool hitObject = false;
+                            glm::vec3 normal;
+                            glm::vec3 hitPoint;
+                            float hitDistance;
 
-                        if (hitObject && hitDistance < closestDistance)
-                        {
-                            closestDistance = hitDistance;
-                            intersectsPrimitive = true;
-
-                            // sample the texture color
-                            glm::vec4 posIntersection;
-                            if (pos[3] > 0)
+                            if (currentObject.type == PrimitiveType::Sphere)
                             {
-                                posIntersection = glm::vec4(hitPoint, 1.0);
+                                float dist = length(posEuclidean - objectData.center);
+                                if (dist - objectData.radius < 0.0)
+                                {
+                                    hitObject = true;
+                                    hitPoint = normalize(posEuclidean - objectData.center) * objectData.radius + objectData.center;
+                                    normal = normalize(hitPoint - objectData.center);
+                                    hitDistance = length(hitPoint - glm::vec3(rayPositions[k - 1 + rayInd * numRayPositions]));
+                                }
                             }
                             else
                             {
-                                posIntersection = glm::vec4(hitPoint, -1.0);
+                                glm::vec3 prevPos = glm::vec3(rayPositions[k - 1 + rayInd * numRayPositions]);
+                                prevPos = glm::vec3(rotationMatrix * glm::vec4(prevPos, 1.0));
+                                glm::vec3 rayDirection = normalize(posEuclidean - prevPos);
+
+                                float tNear, tFar;
+                                if (intersectCube(prevPos, rayDirection, objectData.center, cubeHalfSide, tNear, tFar))
+                                {
+                                    hitObject = true;
+                                    hitPoint = prevPos + rayDirection * tNear;
+                                    normal = getCubeNormal(hitPoint, objectData.center, cubeHalfSide);
+                                    hitDistance = tNear;
+                                }
                             }
 
-                            glm::vec3 dirToCamera = normalize(
-                                glm::vec3(rayPositions[k - 1 + rayInd * numRayPositions] - pos));
+                            if (hitObject && hitDistance < closestDistance)
+                            {
+                                closestDistance = hitDistance;
+                                intersectsPrimitive = true;
 
-                            Hit hit = {posIntersection, dirToCamera, objectData};
-                            glm::vec3 color_vec =
-                                shadePixel(hit, currentObject.textureFile, BumpMap{nullptr, 0, 0},
-                                           lights, currentObject.type, normal) *
-                                255.f;
-                            finalColor = RGBA{static_cast<std::uint8_t>(std::min(255.f, color_vec.x)),
-                                              static_cast<std::uint8_t>(std::min(255.f, color_vec.y)),
-                                              static_cast<std::uint8_t>(std::min(255.f, color_vec.z)), 255};
+                                // sample the texture color
+                                glm::vec4 posIntersection;
+                                if (pos[3] > 0)
+                                {
+                                    posIntersection = glm::vec4(hitPoint, 1.0);
+                                }
+                                else
+                                {
+                                    posIntersection = glm::vec4(hitPoint, -1.0);
+                                }
 
-                            break;
+                                glm::vec3 dirToCamera = normalize(
+                                    glm::vec3(rayPositions[k - 1 + rayInd * numRayPositions] - pos));
+
+                                Hit hit = {posIntersection, dirToCamera, objectData};
+                                glm::vec3 color_vec =
+                                    shadePixel(hit, currentObject.textureFile, BumpMap{nullptr, 0, 0},
+                                               lights, currentObject.type, normal) *
+                                    255.f;
+                                finalColor = RGBA{static_cast<std::uint8_t>(std::min(255.f, color_vec.x)),
+                                                  static_cast<std::uint8_t>(std::min(255.f, color_vec.y)),
+                                                  static_cast<std::uint8_t>(std::min(255.f, color_vec.z)), 255};
+
+                                break;
+                            }
                         }
                     }
                 }
-            }
 
-            if (intersectsPrimitive)
-            {
-                color = finalColor;
-            }
-
-            // if not, display the skybox texture
-            if (!intersectsPrimitive && abs(equatorialRay.l) > lMax)
-            {
-                if (equatorialRay.l > 0.0)
+                if (intersectsPrimitive)
                 {
-                    color = sampleCelestial(sphereUpper, thetaFinal, phiFinal);
+                    color = finalColor;
                 }
-                else
+
+                // if not, display the skybox texture
+                if (!intersectsPrimitive && abs(equatorialRay.l) > lMax)
                 {
-                    color = sampleCelestial(sphereLower, thetaFinal, phiFinal);
+                    if (equatorialRay.l > 0.0)
+                    {
+                        color = sampleCelestial(sphereUpper, thetaFinal, phiFinal);
+                    }
+                    else
+                    {
+                        color = sampleCelestial(sphereLower, thetaFinal, phiFinal);
+                    }
                 }
+
+                r_accum += color.r;
+                g_accum += color.g;
+                b_accum += color.b;
             }
 
-            framebuffer[idx] = color;
+            RGBA finalPixelColor;
+            finalPixelColor.r = static_cast<uint8_t>(r_accum / AA_SAMPLES);
+            finalPixelColor.g = static_cast<uint8_t>(g_accum / AA_SAMPLES);
+            finalPixelColor.b = static_cast<uint8_t>(b_accum / AA_SAMPLES);
+            finalPixelColor.a = 255;
+
+            framebuffer[idx] = finalPixelColor;
         }
     }
 }

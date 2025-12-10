@@ -37,7 +37,7 @@ glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bu
     const float shininess = 0.5f;
 
     const glm::vec3 obj_A = glm::vec3(0.f, 0.5f, 0.f) * ka; // HARDCODED
-    glm::vec3 obj_D = glm::vec3(1.f, 1.f, 1.f) * kd;       // HARDCODED
+    glm::vec3 obj_D = glm::vec3(1.f, 1.f, 1.f) * kd;        // HARDCODED
     // const glm::vec3 obj_S = glm::vec3(1.f, 1.f, 1.f) * ks; // HARDCODED
 
     const glm::vec3 obj_point = glm::normalize(glm::vec3(hit.point) - hit.sphere.center); // point in object space
@@ -55,7 +55,7 @@ glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bu
     // const glm::vec3 V = glm::normalize(world_camera - glm::vec3(intersect));
 
     // Blend obj_D with textures
-    const bool enableTextureMap = false;                    // HARDCODED
+    const bool enableTextureMap = false;                   // HARDCODED
     const FilterType textureFilter = FilterType::Nearest; // HARDCODED
 
     if (enableTextureMap && texture.width > 0)
@@ -141,7 +141,7 @@ glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bu
     const float shininess = 0.5f;
 
     const glm::vec3 obj_A = glm::vec3(0.f, 0.5f, 0.f) * ka; // HARDCODED
-    glm::vec3 obj_D = glm::vec3(1.f, 1.f, 1.f) * kd;       // HARDCODED
+    glm::vec3 obj_D = glm::vec3(1.f, 1.f, 1.f) * kd;        // HARDCODED
     // const glm::vec3 obj_S = glm::vec3(1.f, 1.f, 1.f) * ks; // HARDCODED
 
     const glm::vec3 obj_point = glm::vec3(hit.point) - hit.sphere.center; // point in object space
@@ -150,25 +150,28 @@ glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bu
 
     uv uv_map;
     glm::vec3 obj_normal;
-    
-    if (objectType == PrimitiveType::Sphere) {
+
+    if (objectType == PrimitiveType::Sphere)
+    {
         const glm::vec3 normalized_point = glm::normalize(obj_point);
         uv_map = get_uv(normalized_point);
-        
+
         const bool enableBumpMap = false; // HARDCODED
         obj_normal = enableBumpMap && bump_map.width > 0
-            ? get_bump_normal(bump_map, FilterType::Bilinear, uv_map, 0.01, normalized_point)
-            : normalized_point;
-    } else {
+                         ? get_bump_normal(bump_map, FilterType::Bilinear, uv_map, 0.01, normalized_point)
+                         : normalized_point;
+    }
+    else
+    {
         uv_map = get_cube_uv(obj_point, surfaceNormal);
         obj_normal = surfaceNormal;
     }
-    
+
     const glm::vec3 N = glm::normalize(/*transform **/ obj_normal);
     // const glm::vec3 V = glm::normalize(world_camera - glm::vec3(intersect));
 
     // Blend obj_D with textures
-    const bool enableTextureMap = false;                    // HARDCODED
+    const bool enableTextureMap = false;                   // HARDCODED
     const FilterType textureFilter = FilterType::Nearest; // HARDCODED
 
     if (enableTextureMap && texture.width > 0)
