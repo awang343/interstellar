@@ -271,100 +271,100 @@ void render(RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sph
 
 
 
-                for (const Object &currentObject : objects)
-                {
-                    glm::vec3 objectPos(currentObject.points[0][0], currentObject.points[0][1], currentObject.points[0][2]);
-                    HitObjectData objectData;
-                    float cubeHalfSide = 0.0f;
-                    float lMinObject, lMaxObject;
+                // for (const Object &currentObject : objects)
+                // {
+                //     glm::vec3 objectPos(currentObject.points[0][0], currentObject.points[0][1], currentObject.points[0][2]);
+                //     HitObjectData objectData;
+                //     float cubeHalfSide = 0.0f;
+                //     float lMinObject, lMaxObject;
 
-                    if (currentObject.type == PrimitiveType::Sphere)
-                    {
-                        objectData = HitObjectData{objectPos, currentObject.points[0][3], -length(objectPos)};
-                        lMinObject = objectData.l - objectData.size;
-                        lMaxObject = objectData.l + objectData.size;
-                    }
-                    else
-                    {
-                        cubeHalfSide = currentObject.side * 0.5f;
-                        objectData = HitObjectData{objectPos, cubeHalfSide, -length(objectPos)};
-                        lMinObject = objectData.l - cubeHalfSide * 1.732f;
-                        lMaxObject = objectData.l + cubeHalfSide * 1.732f;
-                    }
+                //     if (currentObject.type == PrimitiveType::Sphere)
+                //     {
+                //         objectData = HitObjectData{objectPos, currentObject.points[0][3], -length(objectPos)};
+                //         lMinObject = objectData.l - objectData.size;
+                //         lMaxObject = objectData.l + objectData.size;
+                //     }
+                //     else
+                //     {
+                //         cubeHalfSide = currentObject.side * 0.5f;
+                //         objectData = HitObjectData{objectPos, cubeHalfSide, -length(objectPos)};
+                //         lMinObject = objectData.l - cubeHalfSide * 1.732f;
+                //         lMaxObject = objectData.l + cubeHalfSide * 1.732f;
+                //     }
 
-                    for (int k = 1; k < rayPositionCounts[rayInd]; k++)
-                    {
-                        glm::vec4 pos = rayPositions[k + rayInd * numRayPositions];
-                        if (pos[3] >= lMinObject && pos[3] <= lMaxObject)
-                        {
-                            glm::vec3 posEuclidean(pos);
-                            posEuclidean = glm::vec3(rotationMatrix * glm::vec4(posEuclidean, 1.0));
+                //     for (int k = 1; k < rayPositionCounts[rayInd]; k++)
+                //     {
+                //         glm::vec4 pos = rayPositions[k + rayInd * numRayPositions];
+                //         if (pos[3] >= lMinObject && pos[3] <= lMaxObject)
+                //         {
+                //             glm::vec3 posEuclidean(pos);
+                //             posEuclidean = glm::vec3(rotationMatrix * glm::vec4(posEuclidean, 1.0));
 
-                            bool hitObject = false;
-                            glm::vec3 normal;
-                            glm::vec3 hitPoint;
-                            float hitDistance;
+                //             bool hitObject = false;
+                //             glm::vec3 normal;
+                //             glm::vec3 hitPoint;
+                //             float hitDistance;
 
-                            if (currentObject.type == PrimitiveType::Sphere)
-                            {
-                                float dist = length(posEuclidean - objectData.center);
-                                if (dist - objectData.size < 0.0)
-                                {
-                                    hitObject = true;
-                                    hitPoint = normalize(posEuclidean - objectData.center) * objectData.size + objectData.center;
-                                    normal = normalize(hitPoint - objectData.center);
-                                    hitDistance = length(hitPoint - glm::vec3(rayPositions[k - 1 + rayInd * numRayPositions]));
-                                }
-                            }
-                            else
-                            {
-                                glm::vec3 prevPos = glm::vec3(rayPositions[k - 1 + rayInd * numRayPositions]);
-                                prevPos = glm::vec3(rotationMatrix * glm::vec4(prevPos, 1.0));
-                                glm::vec3 rayDirection = normalize(posEuclidean - prevPos);
+                //             if (currentObject.type == PrimitiveType::Sphere)
+                //             {
+                //                 float dist = length(posEuclidean - objectData.center);
+                //                 if (dist - objectData.size < 0.0)
+                //                 {
+                //                     hitObject = true;
+                //                     hitPoint = normalize(posEuclidean - objectData.center) * objectData.size + objectData.center;
+                //                     normal = normalize(hitPoint - objectData.center);
+                //                     hitDistance = length(hitPoint - glm::vec3(rayPositions[k - 1 + rayInd * numRayPositions]));
+                //                 }
+                //             }
+                //             else
+                //             {
+                //                 glm::vec3 prevPos = glm::vec3(rayPositions[k - 1 + rayInd * numRayPositions]);
+                //                 prevPos = glm::vec3(rotationMatrix * glm::vec4(prevPos, 1.0));
+                //                 glm::vec3 rayDirection = normalize(posEuclidean - prevPos);
 
-                                float tNear, tFar;
-                                if (intersectCube(prevPos, rayDirection, objectData.center, cubeHalfSide, tNear, tFar))
-                                {
-                                    hitObject = true;
-                                    hitPoint = prevPos + rayDirection * tNear;
-                                    normal = getCubeNormal(hitPoint, objectData.center, cubeHalfSide);
-                                    hitDistance = tNear;
-                                }
-                            }
+                //                 float tNear, tFar;
+                //                 if (intersectCube(prevPos, rayDirection, objectData.center, cubeHalfSide, tNear, tFar))
+                //                 {
+                //                     hitObject = true;
+                //                     hitPoint = prevPos + rayDirection * tNear;
+                //                     normal = getCubeNormal(hitPoint, objectData.center, cubeHalfSide);
+                //                     hitDistance = tNear;
+                //                 }
+                //             }
 
-                            if (hitObject && hitDistance < closestDistance)
-                            {
-                                closestDistance = hitDistance;
-                                intersectsPrimitive = true;
+                //             if (hitObject && hitDistance < closestDistance)
+                //             {
+                //                 closestDistance = hitDistance;
+                //                 intersectsPrimitive = true;
 
-                                // sample the texture color
-                                glm::vec4 posIntersection;
-                                if (pos[3] > 0)
-                                {
-                                    posIntersection = glm::vec4(hitPoint, 1.0);
-                                }
-                                else
-                                {
-                                    posIntersection = glm::vec4(hitPoint, -1.0);
-                                }
+                //                 // sample the texture color
+                //                 glm::vec4 posIntersection;
+                //                 if (pos[3] > 0)
+                //                 {
+                //                     posIntersection = glm::vec4(hitPoint, 1.0);
+                //                 }
+                //                 else
+                //                 {
+                //                     posIntersection = glm::vec4(hitPoint, -1.0);
+                //                 }
 
-                                glm::vec3 dirToCamera = normalize(
-                                    glm::vec3(rayPositions[k - 1 + rayInd * numRayPositions] - pos));
+                //                 glm::vec3 dirToCamera = normalize(
+                //                     glm::vec3(rayPositions[k - 1 + rayInd * numRayPositions] - pos));
 
-                                Hit hit = {posIntersection, dirToCamera, objectData};
-                                glm::vec3 color_vec =
-                                    shadePixel(hit, currentObject.textureFile, BumpMap{nullptr, 0, 0},
-                                               lights, currentObject.type, normal) *
-                                    255.f;
-                                finalColor = RGBA{static_cast<std::uint8_t>(std::min(255.f, color_vec.x)),
-                                                  static_cast<std::uint8_t>(std::min(255.f, color_vec.y)),
-                                                  static_cast<std::uint8_t>(std::min(255.f, color_vec.z)), 255};
+                //                 Hit hit = {posIntersection, dirToCamera, objectData};
+                //                 glm::vec3 color_vec =
+                //                     shadePixel(hit, currentObject.textureFile, BumpMap{nullptr, 0, 0},
+                //                                lights, currentObject.type, normal) *
+                //                     255.f;
+                //                 finalColor = RGBA{static_cast<std::uint8_t>(std::min(255.f, color_vec.x)),
+                //                                   static_cast<std::uint8_t>(std::min(255.f, color_vec.y)),
+                //                                   static_cast<std::uint8_t>(std::min(255.f, color_vec.z)), 255};
 
-                                break;
-                            }
-                        }
-                    }
-                }
+                //                 break;
+                //             }
+                //         }
+                //     }
+                // }
 
                 if (intersectsPrimitive)
                 {

@@ -1,11 +1,11 @@
 {
-  "upperTexture": "texture/shower_inv.png",
-  "lowerTexture": "texture/bathtub_small.png",
+  "upperTexture": "texture/saturn.png",
+  "lowerTexture": "texture/stars.png",
   "primitiveTexture": "texture/earth.png",
-  "outputImage": "output/shower_to_bathtub.png",
+  "outputImage": "output/saturn_high_res_long.png",
 
   "rho": 1.0,
-  "a": 1.0,
+  "a": 5.0,
   "M": 0.02,
 
   "outWidth": 1600,
