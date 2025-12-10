@@ -231,20 +231,6 @@ void render(RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sph
                 offsetX = (gridX - 1) * 0.33f;
                 offsetY = (gridY - 1) * 0.33f;
 
-                if (sampleIdx == 1)
-                {
-                    offsetX = 0.25f;
-                }
-                else if (sampleIdx == 2)
-                {
-                    offsetY = 0.25f;
-                }
-                else if (sampleIdx == 3)
-                {
-                    offsetX = 0.25f;
-                    offsetY = 0.25f;
-                }
-
                 // Normalized device coordinates in [-1,1]
                 float ndcW = 2.0 * ((i + 0.5 + offsetX) / static_cast<float>(outWidth)) - 1.0;
                 float ndcH = 2.0 * ((j + 0.5 + offsetY) / static_cast<float>(outHeight)) - 1.0;
