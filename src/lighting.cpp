@@ -40,7 +40,7 @@ glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bu
     glm::vec3 obj_D = glm::vec3(1.f, 1.f, 1.f) * kd;        // HARDCODED
     // const glm::vec3 obj_S = glm::vec3(1.f, 1.f, 1.f) * ks; // HARDCODED
 
-    const glm::vec3 obj_point = (glm::vec3(hit.point) - hit.sphere.center) / hit.sphere.radius / 2.f; // point in object space
+    const glm::vec3 obj_point = (glm::vec3(hit.point) - hit.obj_data.center) / hit.obj_data.size / 2.f; // point in object space
     const float obj_side = hit.point[3];
     // const glm::mat3 transform = glm::inverse(glm::transpose(glm::mat3(hit.shape->ctm)));
 

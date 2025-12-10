@@ -6,9 +6,9 @@
 #include "utils/rgba.h"
 #include "utils/scenefileparser.h"
 
-struct SphereData {
+struct HitObjectData {
     glm::vec3 center;
-    float radius;
+    float size;
     float l;
 };
 
@@ -16,7 +16,7 @@ struct Hit
 {
     glm::vec4 point;
     glm::vec3 to_camera;
-    SphereData &sphere;
+    HitObjectData &obj_data;
 };
 
 // this function samples the celestial sphere texture gased on given theta and phi
@@ -34,7 +34,7 @@ void render(RGBA *framebuffer,
             WormholeParams wp,
             float dt,
             float cameraDistance,
-            SphereData sphereData,
+            HitObjectData sphereData,
             std::vector<SceneLightData> lights);
 
 void render(RGBA *framebuffer,
@@ -49,7 +49,7 @@ void render(RGBA *framebuffer,
             float cameraDistance,
             float cameraTheta,
             float cameraPhi,
-            SphereData sphereData,
+            HitObjectData sphereData,
             std::vector<SceneLightData> lights);
 
 
@@ -57,14 +57,14 @@ bool renderSingleImage(
     QImage outputImage, QString outputPath,
     RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sphereUpper,
     const ImageData &sphereLower, const ImageData &primitiveTexture, float fovW,
-    WormholeParams wp, float dt, float cameraDistance, SphereData sphereData, std::vector<SceneLightData> lights);
+    WormholeParams wp, float dt, float cameraDistance, HitObjectData sphereData, std::vector<SceneLightData> lights);
 
 
 bool renderPath(
     QImage outputImage, QString outputPath,
     RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sphereUpper,
     const ImageData &sphereLower, const ImageData &primitiveTexture, float fovW,
-    WormholeParams wp, float dt, float cameraDistance, SphereData sphereData, std::vector<SceneLightData> lights,
+    WormholeParams wp, float dt, float cameraDistance, HitObjectData sphereData, std::vector<SceneLightData> lights,
     std::vector<glm::vec4> &keyFrames, int numPhotos);
 
 bool renderFrames(
