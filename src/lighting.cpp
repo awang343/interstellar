@@ -150,8 +150,8 @@ glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bu
     uv uv_map;
     glm::vec3 obj_normal;
 
-    if (objectType == PrimitiveType::Sphere)
-    {
+    // if (objectType == PrimitiveType::Sphere)
+    // {
         const glm::vec3 normalized_point = glm::normalize(obj_point);
         uv_map = get_uv(normalized_point);
 
@@ -159,27 +159,25 @@ glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bu
         obj_normal = enableBumpMap && bump_map.width > 0
                          ? get_bump_normal(bump_map, FilterType::Bilinear, uv_map, 0.01, normalized_point)
                          : normalized_point;
-    }
-    else
-    {
-        uv_map = get_cube_uv(obj_point, surfaceNormal);
-        obj_normal = surfaceNormal;
-    }
+    // }
+    // else
+    // {
+    //     uv_map = get_cube_uv(obj_point, surfaceNormal);
+    //     obj_normal = surfaceNormal;
+    // }
 
     const glm::vec3 N = glm::normalize(/*transform **/ obj_normal);
     // const glm::vec3 V = glm::normalize(world_camera - glm::vec3(intersect));
 
     // Blend obj_D with textures
-    const bool enableTextureMap = false;                   // HARDCODED
-    const FilterType textureFilter = FilterType::Nearest; // HARDCODED
+    const bool enableTextureMap = true;                   // HARDCODED
+    const FilterType textureFilter = FilterType::Bilinear; // HARDCODED
 
     if (enableTextureMap && texture.width > 0)
     {
-        std::cout << "OPEN" << std::endl;
         const float blend = 1.0; // HARDCODED
         const glm::vec3 texture_color = get_texture(texture, textureFilter, uv_map);
         obj_D = obj_D * (1.f - blend) + texture_color * blend;
-        std::cout << "CLOSE" << std::endl;
     }
 
     glm::vec3 pixel_color(obj_A);
