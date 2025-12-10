@@ -4,7 +4,7 @@
   "primitiveTexture": "texture/earth.png",
   "outputImage": "output/shower_to_bathtub.png",
 
-  "rho": 1.0,
+  "rho": 2.0,
   "a": 2.0,
   "M": 0.02,
 
