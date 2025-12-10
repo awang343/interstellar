@@ -269,6 +269,8 @@ void render(RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sph
                 float closestDistance = std::numeric_limits<float>::max();
                 RGBA finalColor = {0, 0, 0, 255};
 
+
+
                 for (const Object &currentObject : objects)
                 {
                     glm::vec3 objectPos(currentObject.points[0][0], currentObject.points[0][1], currentObject.points[0][2]);

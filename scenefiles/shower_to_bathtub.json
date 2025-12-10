@@ -1,11 +1,11 @@
 {
-  "upperTexture": "texture/shower.png",
-  "lowerTexture": "texture/bathtub.png",
+  "upperTexture": "texture/shower_inv.png",
+  "lowerTexture": "texture/bathtub_small.png",
   "primitiveTexture": "texture/earth.png",
   "outputImage": "output/shower_to_bathtub.png",
 
   "rho": 1.0,
-  "a": 0.05,
+  "a": 2.0,
   "M": 0.02,
 
   "outWidth": 1600,
@@ -14,5 +14,5 @@
   "viewPlaneWidthAngle": 60.0,
 
   "dt": -0.01,
-  "cameraDistance": -6.3
+  "cameraDistance": -10.0
 }
