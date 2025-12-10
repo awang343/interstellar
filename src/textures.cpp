@@ -1,5 +1,6 @@
 #include "textures.h"
 #include "glm/fwd.hpp"
+#include "utils/structs.h"
 #include <iostream>
 
 uv get_uv(const glm::vec3 &obj_point)
@@ -15,13 +16,18 @@ uv get_cube_uv(const glm::vec3 &obj_point, const glm::vec3 &normal)
     float u, v;
     glm::vec3 absNormal = glm::abs(normal);
 
-    if (absNormal.x > absNormal.y && absNormal.x > absNormal.z) {
+    if (absNormal.x > absNormal.y && absNormal.x > absNormal.z)
+    {
         u = (obj_point.z / 0.5f + 1.0f) * 0.5f;
         v = (obj_point.y / 0.5f + 1.0f) * 0.5f;
-    } else if (absNormal.y > absNormal.z) {
+    }
+    else if (absNormal.y > absNormal.z)
+    {
         u = (obj_point.x / 0.5f + 1.0f) * 0.5f;
         v = (obj_point.z / 0.5f + 1.0f) * 0.5f;
-    } else {
+    }
+    else
+    {
         u = (obj_point.x / 0.5f + 1.0f) * 0.5f;
         v = (obj_point.y / 0.5f + 1.0f) * 0.5f;
     }
@@ -52,11 +58,29 @@ static std::pair<glm::vec3, glm::vec3> get_dpduv(const uv &uv_coords)
     return {dpdu, dpdv};
 }
 
-static std::pair<glm::vec3, glm::vec3> get_dpduv_cube(const uv &uv_coords)
+static std::pair<glm::vec3, glm::vec3> get_cube_dpduv(const uv &uv_coords, const glm::vec3 &normal)
 {
-    // Placeholder implementation for cube mapping
-    glm::vec3 dpdu(1.0f, 0.0f, 0.0f);
-    glm::vec3 dpdv(0.0f, 1.0f, 0.0f);
+    glm::vec3 dpdu, dpdv;
+    float scale = 1.0f; // Assuming cube of size 1 unit
+
+    glm::vec3 absNormal = glm::abs(normal);
+
+    if (absNormal.x > absNormal.y && absNormal.x > absNormal.z)
+    {
+        dpdu = glm::vec3(0.0f, 0.0f, scale);
+        dpdv = glm::vec3(0.0f, scale, 0.0f);
+    }
+    else if (absNormal.y > absNormal.z)
+    {
+        dpdu = glm::vec3(scale, 0.0f, 0.0f);
+        dpdv = glm::vec3(0.0f, 0.0f, scale);
+    }
+    else
+    {
+        dpdu = glm::vec3(scale, 0.0f, 0.0f);
+        dpdv = glm::vec3(0.0f, scale, 0.0f);
+    }
+
     return {dpdu, dpdv};
 }
 
@@ -91,7 +115,8 @@ static glm::vec2 bilinear_bump(const BumpMap &bmp, const uv &uv_map, const float
     return ((1.f - alpha_y) * I_top + alpha_y * I_bottom);
 }
 
-static glm::vec3 bilinear_texture(const ImageData &image, const uv &uv_map, const float m, const float n)
+static glm::vec3 bilinear_texture(const ImageData &image, const uv &uv_map, const float m,
+                                  const float n)
 {
     const float w = image.width;
     const float h = image.height;
@@ -117,8 +142,9 @@ static glm::vec3 bilinear_texture(const ImageData &image, const uv &uv_map, cons
 
     const glm::vec3 I_top = (1.f - alpha_x) * glm::vec3(tl.r / 255.f, tl.g / 255.f, tl.b / 255.f) +
                             alpha_x * glm::vec3(tr.r / 255.f, tr.g / 255.f, tr.b / 255.f);
-    const glm::vec3 I_bottom = (1.f - alpha_x) * glm::vec3(bl.r / 255.f, bl.g / 255.f, bl.b / 255.f) +
-                               alpha_x * glm::vec3(br.r / 255.f, br.g / 255.f, br.b / 255.f);
+    const glm::vec3 I_bottom =
+        (1.f - alpha_x) * glm::vec3(bl.r / 255.f, bl.g / 255.f, bl.b / 255.f) +
+        alpha_x * glm::vec3(br.r / 255.f, br.g / 255.f, br.b / 255.f);
 
     return ((1.f - alpha_y) * I_top + alpha_y * I_bottom);
 }
@@ -156,14 +182,16 @@ glm::vec3 get_texture(const ImageData &texture, const FilterType filter_type, co
 }
 
 glm::vec3 get_bump_normal(const BumpMap &bump_map, const FilterType filter_type, const uv &uv_map,
-                          float bump_scale, glm::vec3 normal)
+                          float bump_scale, glm::vec3 normal, PrimitiveType objectType)
 {
     const float w = bump_map.width;
     const float h = bump_map.height;
     const float m = 1; // HARDCODED
     const float n = 1; // HARDCODED
 
-    const auto [dpdu, dpdv] = get_dpduv(uv_map);
+    const auto [dpdu, dpdv] =
+        objectType == PrimitiveType::Sphere ? get_dpduv(uv_map) : get_cube_dpduv(uv_map, normal);
+
     glm::vec2 g;
 
     switch (filter_type)
