@@ -47,20 +47,22 @@ glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bu
     uv uv_map;
     glm::vec3 obj_normal;
 
+    const bool enableBumpMap = false; // HARDCODED
     if (objectType == PrimitiveType::Sphere)
     {
         const glm::vec3 normal = glm::normalize(obj_point);
         uv_map = get_uv(obj_point);
 
-        const bool enableBumpMap = false; // HARDCODED
         obj_normal = enableBumpMap && bump_map.width > 0
-                         ? get_bump_normal(bump_map, FilterType::Bilinear, uv_map, 0.01, normal)
+                         ? get_bump_normal(bump_map, FilterType::Bilinear, uv_map, 0.01, normal, objectType)
                          : normal;
     }
     else
     {
         uv_map = get_cube_uv(obj_point, surfaceNormal);
-        obj_normal = surfaceNormal;
+        obj_normal = enableBumpMap && bump_map.width > 0
+                         ? get_bump_normal(bump_map, FilterType::Bilinear, uv_map, 0.01, surfaceNormal, objectType)
+                         : surfaceNormal;
     }
 
     const glm::vec3 N = glm::normalize(/*transform **/ obj_normal);
