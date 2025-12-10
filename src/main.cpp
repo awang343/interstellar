@@ -48,7 +48,6 @@ int main(int argc, char *argv[]) {
 
     if (!loadImageToStruct(scene.upperTexturePath, sphereUpper)) return 1;
     if (!loadImageToStruct(scene.lowerTexturePath, sphereLower)) return 1;
-    if (!loadImageToStruct(scene.primitiveTexturePath, primitiveTexture)) return 1;
 
     // 3. Allocate output QImage using configured resolution
     QImage outputImage(scene.outWidth, scene.outHeight, QImage::Format_RGBA8888);

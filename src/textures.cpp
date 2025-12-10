@@ -88,7 +88,6 @@ static glm::vec2 bilinear_bump(const BumpMap &bmp, const uv &uv_map, const float
 {
     const float w = bmp.width;
     const float h = bmp.height;
-    const glm::vec2 *bmp_data = bmp.gradients;
 
     const float x_left = uv_map.u * m * w - 0.5f;
     const float x_right = x_left + 1.f;
@@ -103,10 +102,10 @@ static glm::vec2 bilinear_bump(const BumpMap &bmp, const uv &uv_map, const float
     const float alpha_x = x_left - std::floorf(x_left);
     const float alpha_y = y_top - std::floorf(y_top);
 
-    const glm::vec2 tl = bmp_data[static_cast<int>(r_top * w + c_left)];
-    const glm::vec2 tr = bmp_data[static_cast<int>(r_top * w + c_right)];
-    const glm::vec2 bl = bmp_data[static_cast<int>(r_bottom * w + c_left)];
-    const glm::vec2 br = bmp_data[static_cast<int>(r_bottom * w + c_right)];
+    const glm::vec2 tl = bmp.gradients[static_cast<int>(r_top * w + c_left)];
+    const glm::vec2 tr = bmp.gradients[static_cast<int>(r_top * w + c_right)];
+    const glm::vec2 bl = bmp.gradients[static_cast<int>(r_bottom * w + c_left)];
+    const glm::vec2 br = bmp.gradients[static_cast<int>(r_bottom * w + c_right)];
 
     const glm::vec2 I_top = (1.f - alpha_x) * tl + alpha_x * tr;
     const glm::vec2 I_bottom = (1.f - alpha_x) * bl + alpha_x * br;
@@ -182,7 +181,7 @@ glm::vec3 get_texture(const ImageData &texture, const FilterType filter_type, co
 }
 
 glm::vec3 get_bump_normal(const BumpMap &bump_map, const FilterType filter_type, const uv &uv_map,
-                          float bump_scale, glm::vec3 normal, PrimitiveType objectType)
+                          float bump_scale, const glm::vec3 &normal, const PrimitiveType objectType)
 {
     const float w = bump_map.width;
     const float h = bump_map.height;
@@ -198,12 +197,10 @@ glm::vec3 get_bump_normal(const BumpMap &bump_map, const FilterType filter_type,
     {
     case FilterType::Nearest:
     {
-        const glm::vec2 *gradients = bump_map.gradients;
-
         const int c = std::fmod(std::floorf(uv_map.u * m * w) + w, w);
         const int r = std::fmod(std::floorf((1 - uv_map.v) * n * h) + h, h);
 
-        g = gradients[static_cast<int>(r * w + c)];
+        g = bump_map.gradients[static_cast<int>(r * w + c)];
         break;
     }
     case FilterType::Bilinear:

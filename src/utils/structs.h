@@ -78,7 +78,7 @@ inline bool loadImageToStruct(const QString &path, ImageData &out)
     return true;
 }
 
-float sample_height_wrap(const Image &img, int x, int y)
+inline float sample_height_wrap(const Image &img, int x, int y)
 {
     x = (x % img.width + img.width) % img.width;
     y = (y % img.height + img.height) % img.height;
@@ -91,15 +91,14 @@ inline bool loadBumpMapToStruct(const QString &path, BumpMap &out)
 {
     Image *bump_image = loadImageFromFile(path.toStdString());
 
-    BumpMap bump_map;
-    bump_map.width = bump_image->width;
-    bump_map.height = bump_image->height;
+    out.width = bump_image->width;
+    out.height = bump_image->height;
 
-    bump_map.gradients.resize(bump_map.width * bump_map.height);
+    out.gradients.resize(out.width * out.height);
 
-    for (int y = 0; y < bump_map.height; y++)
+    for (int y = 0; y < out.height; y++)
     {
-        for (int x = 0; x < bump_map.width; x++)
+        for (int x = 0; x < out.width; x++)
         {
 
             float hL = sample_height_wrap(*bump_image, x - 1, y);
@@ -110,7 +109,7 @@ inline bool loadBumpMapToStruct(const QString &path, BumpMap &out)
             float dX = (hR - hL) * 0.5f;
             float dY = (hD - hU) * 0.5f;
 
-            bump_map.gradients[y * bump_map.width + x] = glm::vec2(dX, dY);
+            out.gradients[y * out.width + x] = glm::vec2(dX, dY);
         }
     }
     return true;

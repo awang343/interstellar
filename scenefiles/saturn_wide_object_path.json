@@ -1,7 +1,6 @@
 {
   "upperTexture": "texture/saturn.png",
   "lowerTexture": "texture/stars.png",
-  "primitiveTexture": "texture/bricks.jpg",
   "outputImage": "output/saturn_wide_path.png",
   "rho": 1.0,
   "a": 0.05,
@@ -11,13 +10,14 @@
   "viewPlaneWidthAngle": 60.0,
   "dt": -0.01,
   "cameraDistance": -6.3,
-  "numPhotos": 20,
+  "numPhotos": 1,
   "outputFolder": "output/saturn_wide_object_path",
   "objects": [
     {
       "type": "sphere",
       "radius": 0.5,
       "textureFile": "texture/bricks.jpg",
+      "bumpMapFile": "texture/bricks_height.jpg",
       "objectPoints": [
         [0.0, 1.0, 0.0, 0.5, 0.0],
         [0.0, 2.0, 0.0, 0.5, 1.0],
@@ -25,16 +25,17 @@
         [0.0, 4.0, 0.0, 0.5, 3.0]
       ]
     },
-   {
-  "type": "cube",
-  "side": 0.5,
-  "textureFile": "texture/bricks.jpg",
-  "objectPoints": [
-    [3.0, 1.0, 0.0, 0.5, 0.0],
-    [3.0, 2.0, 0.0, 0.5, 1.0],
-    [3.0, 3.0, 0.0, 0.5, 2.0],
-    [3.0, 4.0, 0.0, 0.5, 3.0]
-  ]
-}
+    {
+      "type": "cube",
+      "side": 0.5,
+      "textureFile": "texture/bricks.jpg",
+      "bumpMapFile": "texture/bricks_height.jpg",
+      "objectPoints": [
+        [3.0, 1.0, 0.0, 0.5, 0.0],
+        [3.0, 2.0, 0.0, 0.5, 1.0],
+        [3.0, 3.0, 0.0, 0.5, 2.0],
+        [3.0, 4.0, 0.0, 0.5, 3.0]
+      ]
+    }
   ]
 }

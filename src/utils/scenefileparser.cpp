@@ -264,7 +264,6 @@ bool loadSceneInfoFromJson(const QString &path, SceneInfo &outScene)
 
     if (!getString("upperTexture",     outScene.upperTexturePath))     return false;
     if (!getString("lowerTexture",     outScene.lowerTexturePath))     return false;
-    if (!getString("primitiveTexture", outScene.primitiveTexturePath)) return false;  // NEW
     if (!getString("outputImage",      outScene.outputPath))           return false;
 
     // ----------------------

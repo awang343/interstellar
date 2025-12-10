@@ -31,7 +31,7 @@ static inline float calc_falloff(const float &inner, const float &outer, const f
 glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bump_map,
                      const std::vector<SceneLightData> &lights, PrimitiveType objectType, const glm::vec3 &surfaceNormal)
 {
-    static const float ka = 1.f; // HARDCODED
+    static const float ka = 0.f; // HARDCODED
     static const float kd = 1.f; // HARDCODED
     // static const float ks = 1.f; // HARDCODED
     const float shininess = 0.5f;
@@ -47,7 +47,7 @@ glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bu
     uv uv_map;
     glm::vec3 obj_normal;
 
-    const bool enableBumpMap = false; // HARDCODED
+    const bool enableBumpMap = true; // HARDCODED
     if (objectType == PrimitiveType::Sphere)
     {
         const glm::vec3 normal = glm::normalize(obj_point);
