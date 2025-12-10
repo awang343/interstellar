@@ -172,16 +172,14 @@ glm::vec3 shadePixel(const Hit &hit, const ImageData &texture, const BumpMap &bu
     // const glm::vec3 V = glm::normalize(world_camera - glm::vec3(intersect));
 
     // Blend obj_D with textures
-    const bool enableTextureMap = false;                   // HARDCODED
-    const FilterType textureFilter = FilterType::Nearest; // HARDCODED
+    const bool enableTextureMap = true;                   // HARDCODED
+    const FilterType textureFilter = FilterType::Bilinear; // HARDCODED
 
     if (enableTextureMap && texture.width > 0)
     {
-        std::cout << "OPEN" << std::endl;
         const float blend = 1.0; // HARDCODED
         const glm::vec3 texture_color = get_texture(texture, textureFilter, uv_map);
         obj_D = obj_D * (1.f - blend) + texture_color * blend;
-        std::cout << "CLOSE" << std::endl;
     }
 
     glm::vec3 pixel_color(obj_A);
