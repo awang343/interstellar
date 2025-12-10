@@ -37,17 +37,17 @@ void FrameData::loadDefaultObject()
     // remove all objects
     objects.clear();
 
-    // create object
-    Object o;
-    o.type = PrimitiveType::Sphere;
-    // set object's only position to be at (0,20,0)
-    o.points.push_back({0.0, 20.0, 0.0, 0.5, 0});
-    o.radius = 0.5;
-    // set texture file, default to bricks
-    loadImageToStruct("texture/bricks.jpg", o.textureFile);
+    // // create object
+    // Object o;
+    // o.type = PrimitiveType::Sphere;
+    // // set object's only position to be at (0,20,0)
+    // o.points.push_back({0.0, 20.0, 0.0, 0.5, 0});
+    // o.radius = 0.5;
+    // // set texture file, default to bricks
+    // loadImageToStruct("texture/bricks.jpg", o.textureFile);
 
-    // set object's list to be only this object
-    objects.push_back(o);
+    // // set object's list to be only this object
+    // objects.push_back(o);
 }
 
 void FrameData::loadDefaultCamera(float cameraDistance)
@@ -56,15 +56,14 @@ void FrameData::loadDefaultCamera(float cameraDistance)
     cameraPoints.push_back(glm::vec4(cameraDistance, M_PI / 2.0f, 0.f, 0.f));
 }
 
+void FrameData::loadDefaultWormhole(float rho, float a, float M)
+{
+    wormholePoints.clear();
+    wormholePoints.push_back(glm::vec4(rho, a, M, 0.f));
+}
+
 glm::vec3 FrameData::cameraAtT(float t)
 {
-    if (cameraPoints.empty())
-    {
-        // Nothing specified: fall back to something sensible
-        // (you can change this to your default camera)
-        return glm::vec3(0.f, 0.f, 0.f);
-    }
-
     // Assume cameraPoints sorted by .w (time)
     const glm::vec4 &first = cameraPoints.front();
     const glm::vec4 &last = cameraPoints.back();
@@ -120,15 +119,11 @@ std::vector<Object> FrameData::objectsAtT(float t)
 
         std::vector<float> interp;
 
-        if (t <= tMin)
+        if (t <= tMin || t >= tMax)
         {
-            interp = pts.front();
+            continue;
         }
-        else if (t >= tMax)
-        {
-            interp = pts.back();
-        }
-        else
+            else
         {
 
             // Find segment [k, k+1]
@@ -179,10 +174,53 @@ std::vector<Object> FrameData::objectsAtT(float t)
     return result;
 }
 
+glm::vec3 FrameData::wormholeAtT(float t)
+{
+    if (wormholePoints.empty())
+    {
+        // Nothing specified: fall back to something sensible
+        // (you can change this to your default camera)
+        return glm::vec3(0.f, 0.f, 0.f);
+    }
+
+    // Assume cameraPoints sorted by .w (time)
+    const glm::vec4 &first = wormholePoints.front();
+    const glm::vec4 &last = wormholePoints.back();
+
+    if (t <= first.w)
+    {
+        return glm::vec3(first.x, first.y, first.z);
+    }
+    if (t >= last.w)
+    {
+        return glm::vec3(last.x, last.y, last.z);
+    }
+
+    // Find segment containing t
+    int n = static_cast<int>(wormholePoints.size());
+    int seg = findSegment(t, n, [&](int i)
+                          { return wormholePoints[i].w; });
+
+    const glm::vec4 &p0 = wormholePoints[seg];
+    const glm::vec4 &p1 = wormholePoints[seg + 1];
+
+    float t0 = p0.w;
+    float t1 = p1.w;
+    float u = (t1 > t0) ? (t - t0) / (t1 - t0) : 0.0f;
+    u = std::clamp(u, 0.0f, 1.0f);
+
+    float rho = std::lerp(p0.x, p1.x, u);
+    float a = std::lerp(p0.y, p1.y, u);
+    float M = std::lerp(p0.z, p1.z, u);
+
+    //  IM SO TIREDD AHHHHHHHHHHHHHHHH
+    return glm::vec3(rho, a, M);
+}
+
 void FrameData::setTimeRange()
 {
-    float currentMin = cameraPoints.front().w;
-    float currentMax = cameraPoints.back().w;
+    float currentMin = fmin(cameraPoints.front().w, wormholePoints.front().w);
+    float currentMax = fmax(cameraPoints.back().w, wormholePoints.back().w);
 
     for (auto const &obj : objects)
     {

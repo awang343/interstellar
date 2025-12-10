@@ -58,10 +58,10 @@ int main(int argc, char *argv[]) {
 
     RGBA *framebuffer = reinterpret_cast<RGBA*>(outputImage.bits());
 
-    WormholeParams wp{scene.rho, scene.a, scene.M};
-
     // make point light
-    SceneLightData light{LightType::LIGHT_POINT, glm::vec4(1.0), glm::vec3(0.2, 0.05, 0.0), glm::vec4(3.0, 2.0, 3.0, -1.0), glm::vec3(-1.0, 0.0, -1.0), 1.0, 1.0};
+    SceneLightData light1{LightType::LIGHT_POINT, glm::vec4(1.0), glm::vec3(0.2, 0.05, 0.0), glm::vec4(3.0, 2.0, 3.0, -1.0), glm::vec3(-1.0, 0.0, -1.0), 1.0, 1.0};
+    SceneLightData light2{LightType::LIGHT_POINT, glm::vec4(1.0), glm::vec3(0.2, 0.05, 0.0), glm::vec4(3.0, 2.0, 3.0, 1.0), glm::vec3(-1.0, 0.0, -1.0), 1.0, 1.0};
+    std::vector<SceneLightData> lights = std::vector<SceneLightData>{light1, light2};
 
     bool ok = renderFrames(
         outputImage,
@@ -72,9 +72,8 @@ int main(int argc, char *argv[]) {
         sphereUpper,
         sphereLower,
         scene.viewPlaneWidthAngle,
-        wp,
         scene.dt,
-        std::vector<SceneLightData>{light});
+        lights);
 
     if (!ok) return 1;
 

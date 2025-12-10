@@ -30,6 +30,11 @@ bool loadSceneInfoFromJson(const QString &path, SceneInfo &outScene)
 
     QJsonObject obj = doc.object();
 
+    bool usedCameraDefaults    = false;
+    bool usedObjectDefaults    = false;
+    bool usedWormholeDefaults  = false;
+
+
     // ----------------------
     //   Helper lambdas
     // ----------------------
@@ -70,6 +75,15 @@ bool loadSceneInfoFromJson(const QString &path, SceneInfo &outScene)
             return false;
         }
         dst = obj[key].toInt();
+        return true;
+    };
+
+    auto getDimOptional = [&](const QString &key, int &dst) {
+        if (!obj.contains(key) || !obj[key].isDouble()) {
+            dst = -1;
+            return false;
+        }
+        dst = static_cast<float>(obj[key].toDouble());
         return true;
     };
 
@@ -216,6 +230,10 @@ bool loadSceneInfoFromJson(const QString &path, SceneInfo &outScene)
                 std::cerr << "issue loading " << bumpPath.toStdString() << "\n";
                 return false;
             }
+            // --- dimension ---
+            if (objEntry.contains("dim") && objEntry["dim"].isDouble()) {
+                o.dim = static_cast<float>(objEntry["dim"].toDouble());
+            }
 
             // --- objectPoints ---
             if (!objEntry.contains("objectPoints") || !objEntry["objectPoints"].isArray()) {
@@ -303,7 +321,6 @@ bool loadSceneInfoFromJson(const QString &path, SceneInfo &outScene)
     getIntOptional("numPhotos", outScene.frameData.numPhotos);
 
     if (outScene.frameData.numPhotos > 1) {
-        std::cout << "numPhotos > 1" << std::endl;
         // output will have multiple frames, ensure there exists an output folder
         if (!getString("outputFolder", outScene.frameData.outputPath)) {
             std::cerr << "Multiple frames to be rendered but no outputFolder specified\n";
@@ -319,7 +336,6 @@ bool loadSceneInfoFromJson(const QString &path, SceneInfo &outScene)
 
     } else {
         // if numPhotos not specified, set to 1
-        std::cout << "numPhotos = 1" << std::endl;
         outScene.frameData.numPhotos = 1;
 
         // set output to outputImage
@@ -331,12 +347,8 @@ bool loadSceneInfoFromJson(const QString &path, SceneInfo &outScene)
     // ----------------------
 
     if (!getObjectsOptional("objects", outScene.frameData.objects)) {
-        std::cout << "Either no objects specified or issue with parsing. Using default." << std::endl;
-
-        // if no objects in use, load basic object
+        usedObjectDefaults = true;
         outScene.frameData.loadDefaultObject();
-    } else {
-        std::cout << "Objects loaded" << std::endl;
     }
 
     // ----------------------
@@ -344,14 +356,60 @@ bool loadSceneInfoFromJson(const QString &path, SceneInfo &outScene)
     // ----------------------
 
     if (!getPathsOptional("cameraPoints", outScene.frameData.cameraPoints)) {
-        std::cout << "Either no camera points specified or issue with parsing. Using cameraDistance." << std::endl;
-         outScene.frameData.loadDefaultCamera(outScene.cameraDistance);
-    } else {
-        std::cout << "Camera points loaded" << std::endl;
+        usedCameraDefaults = true;
+        outScene.frameData.loadDefaultCamera(outScene.cameraDistance);
+    }
+
+    // ----------------------
+    //   Wormhole paths (optional)
+    // ----------------------
+    if (!getPathsOptional("wormholePoints", outScene.frameData.wormholePoints)) {
+        usedWormholeDefaults = true;
+        outScene.frameData.loadDefaultWormhole(outScene.rho, outScene.a, outScene.M);
     }
 
     // Set tmin, tmax for FrameData
     outScene.frameData.setTimeRange();
+
+    std::cout << "\n========== Scene Summary ==========\n";
+    std::cout << "JSON file:       " << path.toStdString() << "\n";
+    std::cout << "Output path:     " << outScene.frameData.outputPath.toStdString() << "\n";
+    std::cout << "Num photos:      " << outScene.frameData.numPhotos << "\n\n";
+
+    // Camera points
+    if (usedCameraDefaults) {
+        std::cout << "Camera:          DEFAULT camera used\n";
+    } else {
+        std::cout << "Camera points:   " << outScene.frameData.cameraPoints.size()
+        << " points loaded\n";
+    }
+
+    // Wormhole points
+    if (usedWormholeDefaults) {
+        std::cout << "Wormhole:        DEFAULT wormhole params used\n";
+    } else {
+        std::cout << "Wormhole points: " << outScene.frameData.wormholePoints.size()
+        << " points loaded\n";
+    }
+
+    // Objects
+    if (usedObjectDefaults) {
+        std::cout << "Objects:         DEFAULT object loaded\n";
+    } else {
+        std::cout << "Objects:         " << outScene.frameData.objects.size()
+        << " objects loaded\n";
+
+        // Print per-object info
+        for (size_t oi = 0; oi < outScene.frameData.objects.size(); ++oi) {
+            const auto &obj = outScene.frameData.objects[oi];
+
+            std::cout << "  Object " << oi
+                      << " (" << (obj.type == PrimitiveType::Cube ? "Cube" : "Sphere") << ")"
+                      << ": " << obj.points.size() << " keyframes\n";
+        }
+    }
+
+    std::cout << "===================================\n\n" << std::endl;
 
     return true;
 }

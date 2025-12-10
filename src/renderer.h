@@ -68,14 +68,13 @@ bool renderPath(
     std::vector<glm::vec4> &keyFrames, int numPhotos);
 
 bool renderFrames(
-    QImage outputImage,
-    FrameData frameData,
+    QImage &outputImage,
+    FrameData &frameData,
     RGBA *framebuffer,
     int outWidth,
     int outHeight,
     const ImageData &sphereUpper,
     const ImageData &sphereLower,
     float fovW,
-    WormholeParams wp,
     float dt,
-    std::vector<SceneLightData> lights);
+    std::vector<SceneLightData> &lights);

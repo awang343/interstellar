@@ -26,11 +26,13 @@ struct BumpMap
 struct Sphere {
     ImageData textureFile; // should change to path to allow for hashing for multiple objects
     std::vector<std::vector<float>> points;
+    float dim = -1;
 };
 
 struct Cube {
     ImageData textureFile;
     std::vector<std::vector<float>> points;
+    float dim = -1;
     float side;
 };
 
@@ -44,6 +46,7 @@ struct Object {
     BumpMap bumpMapFile;
     std::vector<std::vector<float>> points;
 
+    float dim = -1;
     float radius = 0.0f;
     float side   = 0.0f;
 };
