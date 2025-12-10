@@ -353,7 +353,7 @@ void render(RGBA *framebuffer, int outWidth, int outHeight, const ImageData &sph
 
                                 Hit hit = {posIntersection, dirToCamera, objectData};
                                 glm::vec3 color_vec =
-                                    shadePixel(hit, currentObject.textureFile, BumpMap{nullptr, 0, 0},
+                                    shadePixel(hit, currentObject.textureFile, currentObject.bumpMapFile,
                                                lights, currentObject.type, normal) *
                                     255.f;
                                 finalColor = RGBA{static_cast<std::uint8_t>(std::min(255.f, color_vec.x)),

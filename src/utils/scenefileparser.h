@@ -6,14 +6,6 @@
 #include <QJsonObject>
 #include <glm/glm.hpp>
 
-
-struct BumpMap
-{
-    glm::vec2 *gradients;
-    int width;
-    int height;
-};
-
 struct SceneInfo {
     QString upperTexturePath;
     QString lowerTexturePath;
