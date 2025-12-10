@@ -1,0 +1,46 @@
+{
+  "upperTexture": "texture/saturn.png",
+  "lowerTexture": "texture/stars.png",
+  "primitiveTexture": "texture/bricks.jpg",
+  "outputImage": "output/saturn_wide_path.png",
+
+  "rho": 1.0,
+  "a": 0.05,
+  "M": 0.2,
+
+  "outWidth": 400,
+  "outHeight": 300,
+
+  "viewPlaneWidthAngle": 60.0,
+
+  "dt": -0.01,
+  "cameraDistance": -6.3,
+
+  "useObjects": true,
+  "objects": [
+    {
+      "textureFile": "texture/bricks.jpg",
+      "objectPoints": [
+        [0.0, 2.0, 0.0, 0.5, 0.0]
+      ]
+    }
+
+  ],
+
+  "outputFolder": "output/saturn_go_up",
+  "numPhotos": 20,
+
+  "useCameraPath": true,
+  "cameraPoints": [
+    [-6, 1.57079632679, 3.14159265359, 0]
+  ],
+
+  "wormholePoints": [
+    [1.0, 0.05, 0.2, 0.0],
+    [2.0, 0.05, 0.2, 1.0],
+    [1.0, 0.05, 0.2, 0.0],
+    [1.0, 0.10, 0.2, 0.0]
+  ]
+
+
+}

@@ -1,0 +1,24 @@
+{
+  "upperTexture": "texture/saturn.png",
+  "lowerTexture": "texture/stars.png",
+  "outputImage": "output/saturn_wide_path.png",
+  "rho": 1.0,
+  "a": 0.05,
+  "M": 0.2,
+  "outWidth": 400,
+  "outHeight": 300,
+  "viewPlaneWidthAngle": 60.0,
+  "dt": -0.01,
+  "cameraDistance": -6.3,
+
+  "numPhotos": 10,
+  "outputFolder": "output/wormhole_grow",
+  "cameraPoints": [
+    [-6, 1.57079632679, 0, 0],
+    [-60, 1.57079632679, 0, 1]
+  ],
+  "wormholePoints": [
+    [1.0, 1.0, 0.2, 0],
+    [1.0, 10.0, 0.2, 0]
+  ]
+}
